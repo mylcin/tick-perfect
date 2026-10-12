@@ -1,0 +1,384 @@
+@import 'tailwindcss';
+
+/* The game rules hold no markup; their strings aren't class names. */
+@source not './game';
+
+/* Layout breakpoints, shared with the 3D framing (src/three/camera.ts):
+   wide screens lay out side by side, and a short wide one is a phone held
+   sideways. */
+@custom-variant wide (@media (min-aspect-ratio: 6 / 5));
+@custom-variant short (@media (min-aspect-ratio: 6 / 5) and (max-height: 519.98px));
+/* A small phone held upright: text squeezes up to leave the watch room. */
+@custom-variant compact (@media (max-aspect-ratio: 6 / 5) and (max-height: 699.98px));
+/* Anything not wide: text sits under the watch. */
+@custom-variant upright (@media (max-aspect-ratio: 6 / 5));
+/* The smallest phones held upright (320 × 568), where the text's column
+   reaches the corner buttons. Text only; the framing ignores it. */
+@custom-variant tiny (@media (max-aspect-ratio: 6 / 5) and (max-height: 599.98px));
+
+/* The dark studio: chosen in the settings, or the system's scheme unless
+   the light one was chosen. public/boot.js sets data-theme from the saved
+   settings before the first paint, so a load never flashes the other. */
+@custom-variant studio-dark {
+  &[data-theme='dark'] {
+    @slot;
+  }
+  @media (prefers-color-scheme: dark) {
+    &:not([data-theme='light']) {
+      @slot;
+    }
+  }
+}
+
+/* Animations off: by the setting (data-motion, set by public/boot.js and
+   the app) or, until the app has read the system's, by the system's. */
+@custom-variant still {
+  &[data-motion='reduced'] {
+    @slot;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    &:not([data-motion='full']) {
+      @slot;
+    }
+  }
+}
+
+@theme {
+  --animate-rise: rise 420ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  --animate-fade: fade 280ms ease-out both;
+  --animate-float-up: float-up 760ms ease-out both;
+  --animate-count: count 450ms ease-out both;
+}
+
+/* The studio's colours as utilities (text-ink, bg-surface/95, …), so the
+   interface follows the theme. ink is for text, from the strongest to the
+   faintest (ink-4 is decoration only, never text to read); surface is a
+   panel's ground; accent the gold of a lit marker; studio the backdrop's
+   edge, which the shades under text fade into. */
+@theme inline {
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-ink-4: var(--ink-4);
+  --color-surface: var(--surface);
+  --color-accent: var(--accent);
+  --color-studio: var(--studio-edge);
+}
+
+/* Registered, so a change of studio (the system's scheme, the settings,
+   night mode) crossfades instead of cutting, and the pool of light glides
+   after the watch. */
+@property --studio-pool {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #fbfaf7;
+}
+@property --studio-mid {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #f0ede7;
+}
+@property --studio-edge {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #e2ded6;
+}
+@property --ink {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #1b1a18;
+}
+@property --ink-2 {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #3b3834;
+}
+@property --ink-3 {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #5f5a53;
+}
+@property --ink-4 {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #8a847b;
+}
+@property --surface {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #faf8f4;
+}
+@property --accent {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #7c5212;
+}
+@property --rim {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: transparent;
+}
+@property --glow {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: transparent;
+}
+@property --thumbnail-brightness {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 1;
+}
+@property --pool-x {
+  syntax: '<percentage>';
+  inherits: true;
+  initial-value: 50%;
+}
+@property --pool-y {
+  syntax: '<percentage>';
+  inherits: true;
+  initial-value: 50%;
+}
+
+/* Three studios, as seamless paper sweeps lit by one soft pool of light.
+   Light ("ivory seamless") is the default; the dark one ("graphite
+   seamless") is neutral and a touch warm; night ("lights out") darkens
+   either. Text from ink to ink-3, and the accent, stays above 4.5:1 on all
+   of a studio's backdrop, pool to edge, and on its panels. --studio-edge is
+   also the browser's theme colour (index.html, public/boot.js,
+   src/screens/studio.ts, and the manifest's in vite.config.ts). */
+:root {
+  color-scheme: light;
+  --studio-pool: #fbfaf7;
+  --studio-mid: #f0ede7;
+  --studio-edge: #e2ded6;
+  --ink: #1b1a18;
+  --ink-2: #3b3834;
+  --ink-3: #5f5a53;
+  --ink-4: #8a847b;
+  --surface: #faf8f4;
+  --accent: #7c5212;
+  /* The soft pool text beside the watch sits on (shade-halo): a little
+     lighter than the sweep there in the light studio, darker in the dark. */
+  --halo: var(--studio-mid);
+  /* What outlines a locked watch's silhouette against the backdrop. */
+  --rim: transparent;
+  /* The halo round a Perfect. */
+  --glow: rgb(201 146 47 / 0.35);
+  --thumbnail-brightness: 1;
+  /* The pool sits behind the watch: this is its first place, where the
+     title frames it (src/three/camera.ts), and src/hooks/use-studio.ts
+     moves it after the watch from there. */
+  --pool-shape: ellipse 95% 42%;
+  --pool-x: 50%;
+  --pool-y: 29%;
+  transition:
+    --studio-pool 600ms ease,
+    --studio-mid 600ms ease,
+    --studio-edge 600ms ease,
+    --ink 400ms ease,
+    --ink-2 400ms ease,
+    --ink-3 400ms ease,
+    --ink-4 400ms ease,
+    --surface 400ms ease,
+    --accent 400ms ease,
+    --rim 400ms ease,
+    --glow 400ms ease,
+    --thumbnail-brightness 600ms ease,
+    --pool-x 900ms cubic-bezier(0.2, 0.7, 0.2, 1),
+    --pool-y 900ms cubic-bezier(0.2, 0.7, 0.2, 1);
+
+  @variant wide {
+    --pool-shape: ellipse 46% 70%;
+    --pool-x: 28%;
+    --pool-y: 51%;
+  }
+
+  @variant studio-dark {
+    color-scheme: dark;
+    --studio-pool: #2a2b2e;
+    --studio-mid: #18191b;
+    --studio-edge: #0c0d0e;
+    --ink: #f2f0ec;
+    --ink-2: #d6d3cd;
+    --ink-3: #a29e97;
+    --ink-4: #77736d;
+    --surface: #141517;
+    --accent: #fde68a;
+    --halo: var(--studio-edge);
+    --rim: rgb(255 255 255 / 0.55);
+    --glow: rgb(255 226 170 / 0.65);
+  }
+}
+
+/* Lights out, over either theme: a darker sweep with its pool dimmed, the
+   dark studio's text, and pictures dimmed to match the darkened watch. */
+:root[data-night] {
+  color-scheme: dark;
+  --studio-pool: #141518;
+  --studio-mid: #0a0b0c;
+  --studio-edge: #050506;
+  --ink: #f2f0ec;
+  --ink-2: #d6d3cd;
+  --ink-3: #a29e97;
+  --ink-4: #77736d;
+  --surface: #141517;
+  --accent: #fde68a;
+  --halo: var(--studio-edge);
+  --rim: rgb(255 255 255 / 0.55);
+  --glow: rgb(255 226 170 / 0.65);
+  --thumbnail-brightness: 0.7;
+}
+
+/* With animations off, things appear and go at once, neither moving nor
+   fading. A passing label still leaves on time: it vanishes about when its
+   fade-out would be half done. */
+:root {
+  @variant still {
+    --animate-rise: none;
+    --animate-fade: none;
+    --animate-float-up: vanish 620ms step-end both;
+    --animate-count: none;
+  }
+}
+
+/* Unlayered and important, so it wins over every utility's transition. The
+   page's own too: the studio changes at once. */
+:root {
+  @variant still {
+    &,
+    & *,
+    & *::before,
+    & *::after {
+      transition-duration: 0s !important;
+      transition-delay: 0s !important;
+    }
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes float-up {
+  0% {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  15% {
+    opacity: 1;
+    transform: none;
+  }
+  65% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes count {
+  0% {
+    opacity: 0;
+    transform: scale(1.25);
+  }
+  25% {
+    opacity: 1;
+    transform: none;
+  }
+  100% {
+    opacity: 0.15;
+  }
+}
+
+/* Text over the 3D watch sits on the backdrop's edge colour: solid behind
+   the words, fading out over the 4rem above them, so no bracelet link or
+   highlight runs behind a word. Every screen uses it the same way. `shade`
+   paints it on a panel whose top padding is the fade; `shade-under` lays it
+   under a block of text, out to the screen's sides and bottom; `shade-halo`
+   is a soft pool for text beside the watch on a wide screen. */
+@utility shade {
+  background-image: linear-gradient(
+    to top,
+    var(--studio-edge) calc(100% - 4rem),
+    transparent
+  );
+}
+
+@utility shade-under {
+  isolation: isolate;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: -4rem -100vw -100vh;
+    z-index: -1;
+    pointer-events: none;
+    background-image: linear-gradient(
+      to top,
+      var(--studio-edge) calc(100% - 4rem),
+      transparent
+    );
+  }
+}
+
+@utility shade-halo {
+  isolation: isolate;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: -2.5rem -5rem;
+    z-index: -1;
+    pointer-events: none;
+    background-image: radial-gradient(
+      closest-side,
+      color-mix(in srgb, var(--halo) 92%, transparent) 55%,
+      transparent
+    );
+  }
+}
+
+/* Visible until the very end, then gone (with a step-end timing). */
+@keyframes vanish {
+  to {
+    opacity: 0;
+  }
+}
+
+@layer base {
+  html {
+    /* No pull-to-refresh, bounce or double-tap zoom in the middle of a round. */
+    overscroll-behavior: none;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    @apply text-ink antialiased;
+    font-family: 'Helvetica Neue', Helvetica, Arial, system-ui, sans-serif;
+    /* The studio's sweep with its soft pool of light behind the watch; the
+       canvas is transparent, and its mask fades the strap into whatever is
+       behind it (app.tsx). A faint grain dithers the gradient, which 8-bit
+       colour would draw as rings. Never animated on load: the first paint
+       is already the studio the page stays in. */
+    background:
+      url('/grain.png'),
+      radial-gradient(
+        var(--pool-shape) at var(--pool-x) var(--pool-y),
+        var(--studio-pool) 0%,
+        var(--studio-mid) 58%,
+        var(--studio-edge) 100%
+      ),
+      var(--studio-edge);
+  }
+}

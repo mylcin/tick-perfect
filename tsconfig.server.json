@@ -1,0 +1,16 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.server.tsbuildinfo",
+    // Vercel Functions on Node: the web platform's Request and Response
+    // come with Node's own types, never the DOM's.
+    "lib": ["ES2023"],
+    "types": ["node"],
+    // Vercel compiles each file on its own, never bundling, and Node finds
+    // ES modules by their exact path. So every relative import the API
+    // reaches, in src/ too, names its file: './deps.js', '../game/index.js'.
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext"
+  },
+  "include": ["server", "api"]
+}

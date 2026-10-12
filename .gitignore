@@ -1,0 +1,29 @@
+# Dependencies
+node_modules
+
+# Build output
+dist
+dev-dist
+*.tsbuildinfo
+
+# Tests
+coverage
+.vitest
+playwright-report
+test-results
+blob-report
+
+# Environment
+.env
+.env.*
+!.env.example
+# Made-up values for the e2e build; nothing secret.
+!.env.e2e
+.vercel
+
+# Editors, tools and OS
+.DS_Store
+.claude
+.idea
+*.local
+*.log

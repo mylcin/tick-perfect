@@ -1,0 +1,12 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.game.tsbuildinfo",
+    // The game layer is plain TypeScript: no DOM, no Node and no ambient
+    // @types (React, Three.js, …), so leaking platform code fails typecheck.
+    "lib": ["ES2023"],
+    "types": []
+  },
+  "include": ["src/game"],
+  "exclude": ["src/game/**/*.test.ts"]
+}

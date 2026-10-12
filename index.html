@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <meta
+      name="description"
+      content="A one-tap timing game played on a 3D mechanical watch."
+    />
+    <!-- The preview a shared link unfurls into, challenge and Daily links
+         included. Absolute, as link previews need: on another domain,
+         change these with APP_URL (src/utils/share.ts). public/og.jpg is
+         the real title screen, drawn by scripts/render-og.js. -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Tick Perfect" />
+    <meta property="og:title" content="Tick Perfect" />
+    <meta
+      property="og:description"
+      content="A one-tap timing game played on a 3D mechanical watch."
+    />
+    <meta
+      property="og:image"
+      content="https://tick-perfect.vercel.app/og.jpg"
+    />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta
+      property="og:image:alt"
+      content="Tick Perfect's title screen: a black diver's watch in a dark studio, its seconds hand sweeping towards an amber marker on the bezel."
+    />
+    <meta name="twitter:card" content="summary_large_image" />
+    <!-- The backdrop's edge in the light and dark studios (src/index.css);
+         boot.js overrides both for a theme chosen in the settings. -->
+    <meta
+      name="theme-color"
+      media="(prefers-color-scheme: light)"
+      content="#E2DED6"
+    />
+    <meta
+      name="theme-color"
+      media="(prefers-color-scheme: dark)"
+      content="#0C0D0E"
+    />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Tick Perfect" />
+    <!-- White status text over the dark studios; boot.js asks for dark text
+         ("default") on the light one. -->
+    <meta
+      name="apple-mobile-web-app-status-bar-style"
+      content="black-translucent"
+    />
+    <title>Tick Perfect</title>
+    <!-- Before the stylesheet and the first paint: the saved theme, night
+         mode, motion and language, so a load paints the right studio. -->
+    <script src="/boot.js"></script>
+  </head>
+  <body>
+    <!-- The title's header, drawn before the scripts arrive, with the same
+         classes as src/screens/title-screen.tsx so React replaces it without
+         a shift. Language-neutral: the tagline follows once the language is
+         known. -->
+    <div id="root" data-shell>
+      <main class="relative h-dvh overflow-clip">
+        <section
+          class="absolute inset-0 flex flex-col items-center justify-between px-6 pt-[max(2rem,env(safe-area-inset-top))] pb-[max(1.25rem,env(safe-area-inset-bottom))] short:pt-[max(1rem,env(safe-area-inset-top))] short:pb-[max(0.75rem,env(safe-area-inset-bottom))]"
+        >
+          <header
+            class="shade-halo relative z-10 text-center wide:self-start wide:pl-[8%] wide:text-left"
+          >
+            <h1
+              lang="en"
+              class="text-sm font-medium tracking-[0.5em] text-ink uppercase"
+            >
+              Tick Perfect
+            </h1>
+          </header>
+        </section>
+      </main>
+    </div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

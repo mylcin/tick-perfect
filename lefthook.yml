@@ -1,0 +1,27 @@
+# Git hooks, installed by lefthook's postinstall on `npm install`.
+# https://lefthook.dev/configuration/
+
+pre-commit:
+  jobs:
+    - name: prettier
+      glob: '*.{js,mjs,cjs,ts,tsx,mts,cts,json,css,html,md,yml,yaml}'
+      run: npx prettier --write --ignore-unknown {staged_files}
+      stage_fixed: true
+
+    - name: eslint
+      glob: '*.{js,mjs,cjs,ts,tsx,mts,cts}'
+      run: npx eslint --max-warnings=0 --no-warn-ignored {staged_files}
+
+commit-msg:
+  jobs:
+    - name: commitlint
+      run: npx commitlint --edit {1}
+
+pre-push:
+  parallel: true
+  jobs:
+    - name: typecheck
+      run: npm run typecheck
+
+    - name: unit tests
+      run: npm run test

@@ -161,20 +161,37 @@ export interface Dictionary {
     readonly menu: string;
   };
 
-  /** A ghost: a best round raced again, a ring on the dial where it is. */
-  readonly ghost: {
-    /** The title's button: the watch's best round, again. */
-    readonly open: string;
-    /** The results' heading of a race against the best. */
+  /** The atelier: each open watch's story and what is left to master. */
+  readonly atelier: {
+    /** Its name; the title's button too. */
     readonly title: string;
-    /** In the corner: the ghost's score now, and the gap to it. */
-    readonly hud: (score: number) => string;
-    readonly gap: (gap: number) => string;
-    /** The results: how the round went against the ghost's. */
-    readonly against: string;
-    readonly you: string;
-    readonly them: string;
-    readonly verdict: (gap: number) => string;
+    readonly close: string;
+    readonly intro: string;
+    /** The watch picker's accessible name. */
+    readonly watches: string;
+    /** The collection as a whole. */
+    readonly collection: string;
+    readonly complete: (share: number) => string;
+    readonly tally: (done: number, of: number) => string;
+    readonly tallies: {
+      readonly watches: string;
+      readonly certificates: string;
+      readonly variants: string;
+      readonly achievements: string;
+    };
+    /** The real complication each watch's rule comes from. */
+    readonly complications: Readonly<
+      Record<WatchId, { readonly name: string; readonly text: string }>
+    >;
+    readonly inGame: string;
+    /** What is left to master on the watch. */
+    readonly mastery: (done: number, of: number) => string;
+    readonly best: (score: number) => string;
+    readonly certificateGoal: (score: number) => string;
+    readonly variantGoal: (certificate: string) => string;
+    /** A goal's state, for screen readers. */
+    readonly done: string;
+    readonly todo: string;
   };
 
   /** A friend's challenge link: their round, to beat. */

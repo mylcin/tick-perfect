@@ -46,16 +46,11 @@ uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   with that day's best, the run of days played and how many were. Each
   Daily's best is kept for 60 days, and follows the player like the rest
   of their progress.
-- **Ghosts.** A new best round is kept as a ghost: its seed and the
-  moments of its taps, a couple of kB on the device. Race your best, from
-  the title, plays that round's targets again with a small ring at the
-  dial's edge where its ghost's hand is (the player's hand stays the only
-  hand on the dial), its score and the gap to it in the corner, and
-  the two rounds side by side at the end (score, hits, Perfects, spread);
-  a learnt sequence, it counts for nothing. A Daily's retries race the
-  day's best round the same way, and count as usual. A ghost is played
-  through the engine before each race and left out if the rules have
-  changed since.
+- **The atelier**, from a loupe under How to play: how much of the
+  collection is done (watches, certificates, colourways, achievements),
+  then for each watch the collection has opened the real complication its
+  rule comes from, and what is left to master on it, each goal with what
+  it takes. Locked watches stay out of it, to be found.
 - **Practice**, from the title, on any watch the collection has opened:
   sets of 25 targets where a miss moves on to the next, each target's
   timing shown as it lands, and a summary at the end (hits, Perfects,

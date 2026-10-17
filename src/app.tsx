@@ -12,6 +12,7 @@ import { usePageTheme, useStudioPool } from './hooks/use-studio';
 import { useViewport } from './hooks/use-viewport';
 import { online, ONLINE, useOnline } from './online';
 import { GameScreen } from './screens/game-screen';
+import { AtelierDialog } from './screens/atelier-dialog';
 import { HelpDialog } from './screens/help-dialog';
 import { LeaderboardDialog } from './screens/leaderboard-dialog';
 import { SettingsDialog } from './screens/settings-dialog';
@@ -242,6 +243,7 @@ export function App() {
       <SettingsDialog />
       <TimegrapherDialog />
       <HelpDialog />
+      <AtelierDialog />
       {ONLINE && <LeaderboardDialog />}
       <Announcer />
     </main>

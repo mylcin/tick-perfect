@@ -31,6 +31,8 @@ export interface SessionState {
   readonly leaderboardOpen: boolean;
   /** How to play. */
   readonly helpOpen: boolean;
+  /** The atelier: each open watch's story and what is left to master. */
+  readonly atelierOpen: boolean;
   readonly scene: SceneStatus;
   /** Why the scene failed; null unless it has. */
   readonly sceneFailure: SceneFailure | null;
@@ -67,6 +69,7 @@ export interface SessionState {
   readonly setTimegrapherOpen: (open: boolean) => void;
   readonly setLeaderboardOpen: (open: boolean) => void;
   readonly setHelpOpen: (open: boolean) => void;
+  readonly setAtelierOpen: (open: boolean) => void;
   /** `failure` says why, for 'failed' (WebGL unless told otherwise). */
   readonly setScene: (status: SceneStatus, failure?: SceneFailure) => void;
   readonly setResultShown: (shown: boolean) => void;
@@ -84,6 +87,7 @@ export function createSessionStore(
     timegrapherOpen: false,
     leaderboardOpen: false,
     helpOpen: false,
+    atelierOpen: false,
     scene: 'loading',
     sceneFailure: null,
     caseback: false,
@@ -103,6 +107,7 @@ export function createSessionStore(
         timegrapherOpen: false,
         leaderboardOpen: false,
         helpOpen: false,
+        atelierOpen: false,
         resultShown: false,
       });
     },
@@ -117,6 +122,7 @@ export function createSessionStore(
         timegrapherOpen: false,
         leaderboardOpen: false,
         helpOpen: false,
+        atelierOpen: false,
         resultShown: false,
       }));
     },
@@ -151,6 +157,9 @@ export function createSessionStore(
     },
     setHelpOpen: open => {
       set({ helpOpen: open });
+    },
+    setAtelierOpen: open => {
+      set({ atelierOpen: open });
     },
     // A failure is final: a late "ready" from a dying canvas can't undo it.
     setScene: (status, failure = 'webgl') => {

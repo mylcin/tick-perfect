@@ -186,12 +186,13 @@ would not help, since the key would ship in the page. What other players see
 | P1       | Round history and personal progress in the timegrapher                | M      | Done    |
 | P2       | Daily archive: recent days, bests and run of days                     | S      | Done    |
 | P2       | Open Dailies for new players                                          | S      | Done    |
-| P2       | Ghost replay                                                          | L      | Done    |
+| P2       | Ghost replay                                                          | L      | Dropped |
 | P2       | Practice lab                                                          | M      | Done    |
+| P2       | Atelier                                                               | M      | Done    |
 | P2       | Result card image                                                     | M      | Dropped |
 | P2       | Sign-out asks whether to keep this device's progress                  | S      | Backlog |
 | P3       | Retry a failed ranked submit, sync on leaving the page                | S      | Backlog |
-| P3       | Atelier, stronger bot checks, community features                      | L–XL   | Backlog |
+| P3       | Stronger bot checks, community features                               | L–XL   | Backlog |
 
 ### What landed in this pass
 
@@ -222,14 +223,16 @@ would not help, since the key would ship in the page. What other players see
   event ends the round with no miss. Rounds without it play exactly as
   before (the golden masters are unchanged). `practiceRules` eases a
   watch's rules for the slow pace.
+- `src/state/atelier.ts`, `src/screens/atelier-dialog.tsx`: the atelier.
+  Mastery per watch (certificates, colourways, the two round engravings)
+  and the collection's tallies are derived from the save; nothing new is
+  kept. Locked watches are left out.
 - The result card was built and then dropped, with Share itself, at the
   owner's call: the results end on Retry and Main menu.
-- `src/state/ghost.ts`, `ghost-runner.ts`: ghosts. A new best (the
-  watch's, or the day's Daily) keeps its seed and its taps in played time;
-  `checkGhost` replays it before a race; the runner plays it beside the
-  round on the same clock, mirroring pauses. Where its hand is shows as a
-  small ring at the dial's edge (`parts/ghost-mark.tsx`); a see-through
-  second hand was tried first and confused players about which was theirs.
+- Ghosts were built and then dropped at the owner's call: a see-through
+  second hand, then a ring at the dial's edge, each drew the eye from the
+  player's own hand, and without either a race against a score alone added
+  little.
 - `src/screens/practice-dialog.tsx`, `game-hud.tsx`, `title-screen.tsx`:
   the Practice button, the set's count and each target's timing in the
   HUD, and the summary with the next set's pace.

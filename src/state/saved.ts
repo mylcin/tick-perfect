@@ -8,7 +8,6 @@ import {
   type DailyArchive,
 } from './daily-archive';
 import { restoreEngravings, type Engravings } from './engravings';
-import { restoreGhosts, type Ghosts } from './ghost';
 import { restoreLines, type History, type RoundLine } from './history';
 import { mergeProgress, withEarnedUnlocks, type Progress } from './progress';
 import { RESERVE_DAYS, UNWOUND, type PowerReserve } from './reserve';
@@ -45,8 +44,6 @@ export interface SavedState {
   readonly dailies: DailyArchive;
   /** Each watch's latest rounds, a line each. Kept on this device only. */
   readonly history: History;
-  /** Rounds kept to race again. Kept on this device only. */
-  readonly ghosts: Ghosts;
   /**
    * The tips already shown and the questions already asked, once each
    * (a TipId, or one a newer version added). Kept on this device only.
@@ -269,7 +266,6 @@ export function restoreSaved(
       ? recordDailyBest(dailies, daily.number, daily.best)
       : dailies,
     history: restoreHistory(fields(state['history'])),
-    ghosts: restoreGhosts(state['ghosts']),
     tips: restoreTips(state['tips']),
   };
 }

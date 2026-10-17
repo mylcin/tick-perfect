@@ -123,14 +123,6 @@ and the set ends with a `complete` event after its targets. The game
 screen saves nothing for it, and the slow pace is `practiceRules`, the
 watch's own rules with an easier ramp.
 
-**Ghosts.** A new best round keeps its seed and its taps, in time played
-(`src/state/ghost.ts`), on the device. Raced, it is replayed through the
-engine first (`checkGhost`: a ghost that no longer scores the same is left
-out), then played beside the round by a second controller on the same clock
-(`ghost-runner.ts`), its pauses the player's, where its hand is shown by a
-small ring at the dial's edge (`WatchPose.ghost`, `parts/ghost-mark.tsx`),
-never a second hand.
-
 **Progress over time.** Each finished round adds a line (score, hits,
 Perfects, rate and spread) to its watch's history, the latest 100 per watch
 (`src/state/history.ts`), and each Daily's best goes into an archive of the

@@ -6,6 +6,7 @@ import { CertificatePips } from '../components/certificate-pips';
 import { LevelMeter } from '../components/level-meter';
 import { WithEnglishNames } from '../components/english';
 import {
+  AtelierIcon,
   CasebackIcon,
   CloseIcon,
   HelpIcon,
@@ -94,6 +95,8 @@ export function TitleScreen() {
   const setTimegrapherOpen = useSession(state => state.setTimegrapherOpen);
   const setLeaderboardOpen = useSession(state => state.setLeaderboardOpen);
   const setHelpOpen = useSession(state => state.setHelpOpen);
+  const setAtelierOpen = useSession(state => state.setAtelierOpen);
+  const atelierOpen = useSession(state => state.atelierOpen);
   const timegrapherOpen = useSession(state => state.timegrapherOpen);
   const helpOpen = useSession(state => state.helpOpen);
   const leaderboardOpen = useSession(state => state.leaderboardOpen);
@@ -129,8 +132,6 @@ export function TitleScreen() {
   const turned = caseback && unlocked && scene !== 'failed';
   const engravedCount = engravedOn(engravings, watch).length;
   const best = bestScore(progress, watch);
-  // The best round kept to race, once one has been played since ghosts.
-  const ghost = useAppState(state => state.ghosts.best[watch] ?? null);
   const tier = certificateFor(best);
   // Until a first score anywhere, the line under the name says how the
   // game itself is played.
@@ -203,7 +204,15 @@ export function TitleScreen() {
   // collection. Settings, the timegrapher, the leaderboard and How to play
   // have the keyboard while they're open.
   useEffect(() => {
-    if (settingsOpen || timegrapherOpen || leaderboardOpen || helpOpen) return;
+    if (
+      settingsOpen ||
+      timegrapherOpen ||
+      leaderboardOpen ||
+      helpOpen ||
+      atelierOpen
+    ) {
+      return;
+    }
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.ctrlKey || event.altKey || event.metaKey) return;
       const step = STEPS[event.key];
@@ -240,6 +249,7 @@ export function TitleScreen() {
     timegrapherOpen,
     leaderboardOpen,
     helpOpen,
+    atelierOpen,
     start,
     browse,
     watch,
@@ -326,6 +336,17 @@ export function TitleScreen() {
         }}
       >
         <HelpIcon />
+      </IconButton>
+      {/* Under How to play, as the Timegrapher is under Settings. */}
+      <IconButton
+        label={t.atelier.title}
+        data-testid="atelier-open"
+        className="absolute top-[calc(max(1rem,env(safe-area-inset-top))+3.25rem)] left-[max(1rem,env(safe-area-inset-left))] z-10 animate-fade"
+        onClick={() => {
+          setAtelierOpen(true);
+        }}
+      >
+        <AtelierIcon />
       </IconButton>
 
       {/* Under the watch, on a shade of its own; the framing keeps the
@@ -535,40 +556,21 @@ export function TitleScreen() {
                 : t.collection.locked}
           </Button>
         )}
-        {/* Practice on the watch on show (slowly until it is certified),
-            or its best round again, against that round's ghost. */}
+        {/* Practice on the watch on show: slowly until it is certified. */}
         {!failed && unlocked && (
-          <div className="-my-2 flex items-center gap-1 short:-my-1">
-            <Button
-              variant="quiet"
-              aria-disabled={!ready}
-              className="min-h-10! px-4! text-xs! tracking-[0.12em]! uppercase"
-              onClick={() => {
-                startMode({
-                  kind: 'practice',
-                  pace: tier === null ? 'slow' : 'normal',
-                });
-              }}
-            >
-              {t.practice.open}
-            </Button>
-            {ghost && (
-              <Button
-                variant="quiet"
-                aria-disabled={!ready}
-                className="min-h-10! px-4! text-xs! tracking-[0.12em]! uppercase"
-                onClick={() => {
-                  startMode({
-                    kind: 'ghost',
-                    seed: ghost.seed,
-                    toBeat: ghost.score,
-                  });
-                }}
-              >
-                {t.ghost.open}
-              </Button>
-            )}
-          </div>
+          <Button
+            variant="quiet"
+            aria-disabled={!ready}
+            className="-my-2 min-h-10! px-4! text-xs! tracking-[0.12em]! uppercase short:-my-1"
+            onClick={() => {
+              startMode({
+                kind: 'practice',
+                pace: tier === null ? 'slow' : 'normal',
+              });
+            }}
+          >
+            {t.practice.open}
+          </Button>
         )}
         {!failed && (
           <div className="flex flex-col items-center gap-1">

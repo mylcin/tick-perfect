@@ -69,6 +69,17 @@ export function LockIcon() {
 }
 
 /** A timegrapher's screen: a frame with a trace of dots across it. */
+/** A watchmaker's loupe. */
+export function AtelierIcon() {
+  return (
+    <Icon>
+      <circle cx="10.5" cy="10.5" r="6" />
+      <path d="M15 15l5 5" />
+      <path d="M8 10.5h5M10.5 8v5" strokeWidth="1.2" />
+    </Icon>
+  );
+}
+
 export function TimegrapherIcon() {
   return (
     <Icon>

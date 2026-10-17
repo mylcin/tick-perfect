@@ -19,7 +19,6 @@ import {
   type HitQuality,
   type MissReason,
   type PracticePace,
-  type ReplayResult,
 } from '../game';
 import { VIBRATIONS } from '../feedback/cues';
 import { vibrate } from '../feedback/haptics';
@@ -45,9 +44,7 @@ import {
 import { bestScore } from '../state/progress';
 import { goalAfter } from '../state/results';
 import { sessionStore, useSession } from '../state/session';
-import { engravingOf, type EngravingId } from '../state/engravings';
-import { checkGhost, ghostOf, type GhostRun } from '../state/ghost';
-import { createGhostRunner, type GhostRunner } from '../state/ghost-runner';
+import { engravingOf } from '../state/engravings';
 import { lineFor, MODE_CODES } from '../state/history';
 import { roundStats } from '../state/timegrapher';
 import { newlyEarnedVariants } from '../state/variants';
@@ -58,7 +55,6 @@ import type { WatchId, WatchSpec } from '../watches';
 import { GameHud } from './game-hud';
 import {
   GameOverDialog,
-  type GhostComparison,
   type RoundOutcome,
   type RoundResult,
 } from './game-over-dialog';
@@ -88,58 +84,12 @@ function rankedModeOf(mode: RoundMode): RankedMode | null {
       return { kind: 'daily', number: mode.number };
     case 'challenge':
     case 'practice':
-    case 'ghost':
       return null;
   }
 }
 
-/** A mode whose rounds are saved: any but practice and a ghost race. */
-type SavedMode = Exclude<RoundMode, { readonly kind: 'practice' | 'ghost' }>;
-
-/** A ghost being raced: its runner and its round as it was played. */
-interface Race {
-  readonly runner: GhostRunner;
-  readonly replay: ReplayResult;
-  readonly stopListening: () => void;
-}
-
-/** How the round went against the ghost's, side by side. */
-function compared(
-  race: Race,
-  round: { hits: number; perfects: number },
-  errors: readonly number[]
-): GhostComparison {
-  const spreadOf = (of: readonly number[]) =>
-    of.length >= TIMING_MIN_HITS ? roundStats(of).spread : null;
-  return {
-    ghost: {
-      score: race.replay.score,
-      hits: race.replay.hits,
-      perfects: race.replay.perfects,
-      spread: spreadOf(race.replay.errors),
-    },
-    you: {
-      hits: round.hits,
-      perfects: round.perfects,
-      spread: spreadOf(errors),
-    },
-  };
-}
-
-/**
- * The ghost a mode races, if one is kept: the watch's best round in a race
- * against it, the day's best on a Daily's retries.
- */
-function ghostFor(mode: RoundMode, watch: WatchId): GhostRun | null {
-  const { ghosts } = appStore.getState();
-  if (mode.kind === 'ghost') return ghosts.best[watch] ?? null;
-  const { daily } = ghosts;
-  return mode.kind === 'daily' &&
-    daily?.number === mode.number &&
-    daily.watch === watch
-    ? daily
-    : null;
-}
+/** A mode whose rounds are saved: any but practice. */
+type SavedMode = Exclude<RoundMode, { readonly kind: 'practice' }>;
 
 /** A fresh seed per round; the seed is kept, so any round can be replayed. */
 function randomSeed(): number {
@@ -255,9 +205,6 @@ export function GameScreen({
   const [practiceResult, setPracticeResult] = useState<PracticeResult | null>(
     null
   );
-  // The ghost raced this round, if any, and its score as it plays.
-  const race = useRef<Race | null>(null);
-  const [ghostScore, setGhostScore] = useState<number | null>(null);
   const [resultVisible, setResultVisible] = useState(false);
   const [countdown, setCountdown] = useState<number | null>(null);
   /** Counts the rounds asked for; each one starts after the ready beat. */
@@ -295,19 +242,12 @@ export function GameScreen({
     });
   }, [controller, mode, spec.id]);
 
-  const feedbackTicks = useGameFeedback(
+  const playTicks = useGameFeedback(
     controller,
     spec.id,
     t,
     learning ? t.rules[spec.id] : null,
     standing
-  );
-  const playTicks = useCallback(
-    (now: number) => {
-      feedbackTicks(now);
-      race.current?.runner.advance(now);
-    },
-    [feedbackTicks]
   );
   useGameLoop(controller, playTicks);
   const tip = useTips(controller, t, learning);
@@ -323,36 +263,8 @@ export function GameScreen({
             setResult(null);
             setPracticeResult(null);
             setResultVisible(false);
-            race.current?.stopListening();
-            race.current = null;
-            controller.setGhost(null);
-            setGhostScore(null);
           }
           const { state: over, qualities, errors } = controller.snapshot();
-          // A best round on this seed races beside this one, if it still
-          // plays as it did under these rules.
-          if (event.type === 'started' && over.phase === 'playing') {
-            const run = ghostFor(mode, spec.id);
-            const replay =
-              run?.seed === over.round.seed
-                ? checkGhost(controller.rules, run)
-                : null;
-            if (run && replay) {
-              const runner = createGhostRunner(controller.rules, run);
-              runner.start(event.time);
-              controller.setGhost(runner);
-              setGhostScore(0);
-              race.current = {
-                runner,
-                replay,
-                stopListening: runner.controller.subscribe(() => {
-                  setGhostScore(runner.controller.score.get());
-                }),
-              };
-            }
-          }
-          if (event.type === 'paused') race.current?.runner.pause(event.time);
-          if (event.type === 'resumed') race.current?.runner.resume(event.time);
           // Practice saves nothing: a miss is said as the set goes on, and
           // its end shows how it went.
           if (event.type === 'slip') {
@@ -387,67 +299,36 @@ export function GameScreen({
             over.phase === 'gameOver' &&
             mode.kind !== 'practice'
           ) {
-            race.current?.runner.stop(event.time);
-            const ghost = race.current
-              ? compared(race.current, over.round, errors)
-              : null;
-            const log = controller.log();
-            let outcome: RoundOutcome;
-            let engraved: EngravingId[] = [];
-            if (mode.kind === 'ghost') {
-              // A learnt sequence: it counts towards nothing.
-              outcome = {
-                kind: 'ghost',
-                beat: beatStatus(event.score, mode.toBeat),
-              };
-            } else {
-              outcome = recordRound(mode, spec.id, event.score, qualities);
-              // Timing measures skill, not score: every mode counts it,
-              // and keeps a line for the round to compare later ones with.
-              appStore.getState().recordTiming(spec.id, errors, qualities);
-              appStore
-                .getState()
-                .recordLine(
-                  spec.id,
-                  lineFor(
-                    Date.now(),
-                    MODE_CODES[mode.kind],
-                    event.score,
-                    errors,
-                    qualities
-                  )
-                );
-              // So do the engravings, with the score and timing saved.
-              engraved = appStore
-                .getState()
-                .engrave(spec.id, {
+            const outcome = recordRound(mode, spec.id, event.score, qualities);
+            // Timing measures skill, not score: every mode counts it, and
+            // keeps a line for the round to compare later ones with.
+            appStore.getState().recordTiming(spec.id, errors, qualities);
+            appStore
+              .getState()
+              .recordLine(
+                spec.id,
+                lineFor(
+                  Date.now(),
+                  MODE_CODES[mode.kind],
+                  event.score,
                   errors,
-                  bestStreak: over.round.bestStreak,
-                })
-                .map(engravingOf)
-                .filter(id => id !== null);
-              // A new best is kept to race: the watch's, or the day's.
-              if (log && outcome.kind === 'collection' && outcome.isNewBest) {
-                appStore
-                  .getState()
-                  .keepGhost(spec.id, ghostOf(log, event.score));
-              }
-              if (log && outcome.kind === 'daily' && outcome.daily.isNewBest) {
-                appStore.getState().keepDailyGhost({
-                  ...ghostOf(log, event.score),
-                  number: outcome.number,
-                  watch: spec.id,
-                });
-              }
-              const ticket = ranked.current;
-              ranked.current = null;
-              if (ticket && log) {
-                void online.submit(ticket, log, event.score, CLIENT_VERSION);
-              }
-              online.progressChanged();
+                  qualities
+                )
+              );
+            // So do the engravings, with the score and timing saved.
+            const engraved = appStore
+              .getState()
+              .engrave(spec.id, { errors, bestStreak: over.round.bestStreak })
+              .map(engravingOf)
+              .filter(id => id !== null);
+            const ticket = ranked.current;
+            const log = controller.log();
+            ranked.current = null;
+            if (ticket && log) {
+              void online.submit(ticket, log, event.score, CLIENT_VERSION);
             }
+            online.progressChanged();
             setResult({
-              ghost,
               score: event.score,
               reason: event.reason,
               nearMiss: nearMiss(over),
@@ -637,7 +518,6 @@ export function GameScreen({
         state={state}
         lastHit={lastHit}
         lastTap={lastTap}
-        ghostScore={ghostScore}
         rules={controller.rules}
         standing={standing}
         twistHints={learning}

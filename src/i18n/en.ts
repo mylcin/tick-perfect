@@ -134,21 +134,67 @@ export const en: Dictionary = {
     menu: 'Main menu',
   },
 
-  ghost: {
-    open: 'Race your best',
-    title: 'Against your best',
-    hud: score => `Ghost ${String(score)}`,
-    gap: gap =>
-      gap === 0 ? '±0' : gap > 0 ? `+${String(gap)}` : `−${String(-gap)}`,
-    against: 'Against your ghost',
-    you: 'You',
-    them: 'Ghost',
-    verdict: gap =>
-      gap > 0
-        ? `You beat your ghost by ${String(gap)}.`
-        : gap < 0
-          ? `Your ghost stays ahead by ${String(-gap)}.`
-          : 'Level with your ghost.',
+  atelier: {
+    title: 'Atelier',
+    close: 'Close the atelier',
+    intro:
+      'Each watch’s rule comes from a real complication. Here is the story, and what is left to master.',
+    watches: 'Watches',
+    collection: 'The collection',
+    complete: share =>
+      `${new Intl.NumberFormat('en', { style: 'percent', maximumFractionDigits: 0 }).format(share)} complete`,
+    tally: (done, of) => `${String(done)}/${String(of)}`,
+    tallies: {
+      watches: 'Watches',
+      certificates: 'Certificates',
+      variants: 'Colourways',
+      achievements: 'Achievements',
+    },
+    complications: {
+      diver: {
+        name: 'Rotating dive bezel',
+        text: 'Before going down, a diver turns the bezel’s marker to the minute hand and reads the minutes gone from it. It turns one way only, so a knock can make a dive look longer, never shorter.',
+      },
+      chronograph: {
+        name: 'Chronograph',
+        text: 'A stopwatch built into the watch: one pusher starts and stops its hand, the other returns it to zero. Racing drivers and pilots timed laps and legs with it.',
+      },
+      gmt: {
+        name: 'GMT hand',
+        text: 'A fourth hand goes round once a day against a 24-hour scale, keeping a second time zone. It was made for airline crews in the 1950s, when flights first crossed oceans in a day.',
+      },
+      moonphase: {
+        name: 'Moon phase',
+        text: 'A disc painted with two moons turns a little each day under a window shaped like hills, so the moon grows, fills and wanes there as it does in the sky. Its light comes and goes; its place doesn’t.',
+      },
+      tourbillon: {
+        name: 'Tourbillon',
+        text: 'Breguet’s answer to gravity, patented in 1801: the escapement turns in a cage about once a minute, so the errors a watch gathers held one way even out. Its rate holds however the watch is held.',
+      },
+      grandComplication: {
+        name: 'Grand complication',
+        text: 'Not one complication but many, in one movement: the summit of the craft, where a watchmaker shows all the trade can do. Endless asks for every rule of the first series in one round.',
+      },
+      field: {
+        name: 'Hacking seconds',
+        text: 'A field watch stops its seconds hand while the crown is pulled out, so soldiers could set their watches to the same second before moving off together. The hand waits, then runs on.',
+      },
+      pilot: {
+        name: 'Observer’s dial',
+        text: 'Navigators’ watches of the 1940s were made huge and plain, with a triangle at 12, to be read at a glance in a cockpit. Flying through cloud, a pilot trusts the instruments, not the view.',
+      },
+      digital: {
+        name: 'Countdown timer',
+        text: 'An analog-digital pairs hands with a liquid-crystal display that can count down and beep at zero: sailors use one to cross a race’s start line the moment the gun goes.',
+      },
+    },
+    inGame: 'In the game',
+    mastery: (done, of) => `Mastery ${String(done)} of ${String(of)}`,
+    best: score => `Best ${String(score)}`,
+    certificateGoal: score => `A best of ${String(score)}`,
+    variantGoal: certificate => `Earned with ${certificate}`,
+    done: 'done',
+    todo: 'still to do',
   },
 
   challenge: {

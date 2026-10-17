@@ -29,7 +29,6 @@ import {
 import { CloudCover } from './parts/cloud-cover';
 import { Cyclops } from './parts/cyclops';
 import { Display } from './parts/display';
-import { GhostMark } from './parts/ghost-mark';
 import { GmtHand } from './parts/gmt-hand';
 import { Markers } from './parts/markers';
 import { Pushers } from './parts/pushers';
@@ -572,7 +571,6 @@ export function WatchModel({
         {gmt && g.gmtHand && (
           <GmtHand geometry={g.gmtHand} materials={m} restAngle={gmtRest} />
         )}
-        <GhostMark materials={m} />
         <group ref={secondsHand} position-z={HAND_Z.seconds}>
           <mesh geometry={g.secondsHand.metal} material={m.secondsHand} />
           {g.secondsHand.lume && (

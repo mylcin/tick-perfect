@@ -27,7 +27,7 @@ export interface RoundLog {
  */
 export const MAX_LOGGED_ACTIONS = 2000;
 
-export interface ReplayResult {
+interface ReplayResult {
   readonly score: number;
   readonly hits: number;
   readonly perfects: number;

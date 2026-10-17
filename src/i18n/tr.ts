@@ -130,21 +130,67 @@ export const tr: Dictionary = {
     menu: 'Ana menü',
   },
 
-  ghost: {
-    open: 'Rekoruna karşı',
-    title: 'Rekoruna karşı',
-    hud: score => `Ghost ${String(score)}`,
-    gap: gap =>
-      gap === 0 ? '±0' : gap > 0 ? `+${String(gap)}` : `−${String(-gap)}`,
-    against: 'Ghost’a karşı',
-    you: 'Sen',
-    them: 'Ghost',
-    verdict: gap =>
-      gap > 0
-        ? `Ghost’u ${String(gap)} puan farkla geçtin.`
-        : gap < 0
-          ? `Ghost ${String(-gap)} puan önde kaldı.`
-          : 'Ghost ile berabere.',
+  atelier: {
+    title: 'Atölye',
+    close: 'Atölyeyi kapat',
+    intro:
+      'Her saatin kuralı gerçek bir komplikasyondan gelir. İşte hikayesi ve ustalaşmak için kalanlar.',
+    watches: 'Saatler',
+    collection: 'Koleksiyon',
+    complete: share =>
+      `%${new Intl.NumberFormat('tr', { maximumFractionDigits: 0 }).format(share * 100)} tamamlandı`,
+    tally: (done, of) => `${String(done)}/${String(of)}`,
+    tallies: {
+      watches: 'Saatler',
+      certificates: 'Sertifikalar',
+      variants: 'Renkler',
+      achievements: 'Başarımlar',
+    },
+    complications: {
+      diver: {
+        name: 'Dönen dalış çerçevesi',
+        text: 'Dalgıç suya girmeden çerçevenin işaretini yelkovana getirir ve geçen dakikaları oradan okur. Çerçeve yalnızca bir yöne döner; bir çarpma dalışı uzun gösterebilir, asla kısa değil.',
+      },
+      chronograph: {
+        name: 'Kronograf',
+        text: 'Saatin içine kurulmuş bir kronometre: bir düğme ibresini başlatıp durdurur, öbürü sıfıra döndürür. Yarış pilotları ve havacılar turlarını ve uçuş ayaklarını onunla ölçtü.',
+      },
+      gmt: {
+        name: 'GMT ibresi',
+        text: 'Dördüncü bir ibre 24 saatlik bir ölçekte günde bir tur atarak ikinci bir saat dilimini tutar. 1950’lerde, uçuşların okyanusları ilk kez bir günde aştığı yıllarda havayolu ekipleri için yapıldı.',
+      },
+      moonphase: {
+        name: 'Ay evresi',
+        text: 'Üzerine iki ay boyanmış bir disk, tepe biçimli bir pencerenin altında her gün biraz döner; ay orada da gökyüzündeki gibi büyür, dolunay olur ve küçülür. Işığı gelip gider, yeri değişmez.',
+      },
+      tourbillon: {
+        name: 'Tourbillon',
+        text: 'Breguet’nin yerçekimine cevabı, 1801’de patentlendi: eşapman bir kafes içinde yaklaşık dakikada bir döner, böylece saatin tek bir duruşta biriktirdiği hatalar dengelenir. Saat nasıl tutulursa tutulsun işleyişi şaşmaz.',
+      },
+      grandComplication: {
+        name: 'Büyük komplikasyon',
+        text: 'Tek bir komplikasyon değil, tek bir mekanizmada birçoğu: saatçiliğin zirvesi, ustanın mesleğin her şeyini gösterdiği yer. Endless, ilk serinin bütün kurallarını tek bir turda ister.',
+      },
+      field: {
+        name: 'Durdurulabilen saniye',
+        text: 'Saha saatinde kurma kolu çekilince saniye ibresi durur; askerler birlikte yola çıkmadan önce saatlerini aynı saniyeye ayarlayabilsin diye. İbre bekler, sonra kaldığı yerden devam eder.',
+      },
+      pilot: {
+        name: 'Gözlemci kadranı',
+        text: '1940’ların navigatör saatleri, kokpitte bir bakışta okunsun diye kocaman ve sade yapıldı; 12’de bir üçgen vardı. Bulutun içinde uçan pilot manzaraya değil göstergelere güvenir.',
+      },
+      digital: {
+        name: 'Geri sayım',
+        text: 'Analog-dijital saat ibreleri, geri sayıp sıfırda öten bir sıvı kristal ekranla birleştirir: yelkenciler yarışın başlangıç çizgisini tam silah atıldığı anda geçmek için onu kullanır.',
+      },
+    },
+    inGame: 'Oyunda',
+    mastery: (done, of) => `Ustalık: ${String(done)}/${String(of)}`,
+    best: score => `En iyi ${String(score)}`,
+    certificateGoal: score => `En iyi skor ${String(score)}`,
+    variantGoal: certificate => `${certificate} ile kazanılır`,
+    done: 'tamamlandı',
+    todo: 'yapılacak',
   },
 
   challenge: {

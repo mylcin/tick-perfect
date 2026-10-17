@@ -123,8 +123,6 @@ export interface WatchPose {
   readonly cloud: CloudPose | null;
   /** Where a Digital's countdown stands; null when it shows the time. */
   readonly countdown: CountdownState | null;
-  /** Where a raced ghost's seconds hand is, degrees clockwise; null with none. */
-  readonly ghost: number | null;
 }
 
 /**
@@ -160,7 +158,6 @@ export const RESTING: WatchPose = {
   hacked: false,
   cloud: null,
   countdown: null,
-  ghost: null,
 };
 
 interface PoseOptions {
@@ -197,7 +194,6 @@ export function poseFromGame(
       hacked: false,
       cloud: null,
       countdown: null,
-      ghost: null,
     };
   }
   const time =
@@ -230,7 +226,6 @@ export function poseFromGame(
     hacked: state.phase !== 'gameOver' && isHeldAt(segment, time),
     cloud: state.phase === 'gameOver' ? null : cloudPose(segment, time),
     countdown: state.phase === 'gameOver' ? null : countdownAt(segment, time),
-    ghost: null,
   };
 }
 

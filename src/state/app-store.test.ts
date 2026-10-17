@@ -20,7 +20,6 @@ const DEFAULTS: SavedState = {
   engravings: {},
   dailies: {},
   history: {},
-  ghosts: { best: {}, daily: null },
   tips: [],
 };
 
@@ -53,7 +52,6 @@ describe('createAppStore', () => {
         engravings: {},
         dailies: {},
         history: {},
-        ghosts: { best: {}, daily: null },
         tips: [],
       },
       version: SAVE_VERSION,

@@ -50,11 +50,13 @@ import { checkGhost, ghostOf, type GhostRun } from '../state/ghost';
 import { createGhostRunner, type GhostRunner } from '../state/ghost-runner';
 import { lineFor, MODE_CODES } from '../state/history';
 import { roundStats } from '../state/timegrapher';
-import { newlyEarnedVariants } from '../state/variants';
+import { newlyEarnedVariants, shownVariant } from '../state/variants';
+import { cardImageUrl, thumbnailUrl } from '../three/thumbnails';
 import { announce } from '../utils/announcer';
 import { inputTime } from '../utils/input-time';
 import { whenVisible } from '../utils/when-visible';
 import type { WatchId, WatchSpec } from '../watches';
+import { cardContent } from './card-content';
 import { GameHud } from './game-hud';
 import {
   GameOverDialog,
@@ -139,6 +141,13 @@ function ghostFor(mode: RoundMode, watch: WatchId): GhostRun | null {
     daily.watch === watch
     ? daily
     : null;
+}
+
+/** The watch in the variant worn, large for a card, then as a thumbnail. */
+function cardImages(watch: WatchId): string[] {
+  const { progress, variants } = appStore.getState();
+  const { id } = shownVariant(progress, variants, watch);
+  return [cardImageUrl(watch, id), thumbnailUrl(watch, id)];
 }
 
 /** A fresh seed per round; the seed is kept, so any round can be replayed. */
@@ -460,6 +469,15 @@ export function GameScreen({
                 watch: spec.id,
                 watchName: spec.name,
                 seed: over.round.seed,
+                score: event.score,
+                qualities,
+                daily: appStore.getState().daily,
+              }),
+              card: cardContent({
+                t,
+                outcome,
+                watchName: spec.name,
+                images: cardImages(spec.id),
                 score: event.score,
                 qualities,
                 daily: appStore.getState().daily,

@@ -188,7 +188,7 @@ would not help, since the key would ship in the page. What other players see
 | P2       | Open Dailies for new players                                          | S      | Done    |
 | P2       | Ghost replay                                                          | L      | Done    |
 | P2       | Practice lab                                                          | M      | Done    |
-| P2       | Result card image                                                     | M      | Backlog |
+| P2       | Result card image                                                     | M      | Done    |
 | P2       | Sign-out asks whether to keep this device's progress                  | S      | Backlog |
 | P3       | Retry a failed ranked submit, sync on leaving the page                | S      | Backlog |
 | P3       | Atelier, stronger bot checks, community features                      | L–XL   | Backlog |
@@ -222,6 +222,11 @@ would not help, since the key would ship in the page. What other players see
   event ends the round with no miss. Rounds without it play exactly as
   before (the golden masters are unchanged). `practiceRules` eases a
   watch's rules for the slow pace.
+- `src/utils/result-card.ts`, `src/screens/card-content.ts`: the result
+  card, drawn on a canvas in the page's studio colours, shared as a file
+  where `navigator.canShare` allows and saved otherwise; its large watch
+  pictures (`public/watches/card/`, `render-thumbnails.js --card`) are left
+  out of the offline cache.
 - `src/state/ghost.ts`, `ghost-runner.ts`: ghosts. A new best (the
   watch's, or the day's Daily) keeps its seed and its taps in played time;
   `checkGhost` replays it before a race; the runner plays it beside the

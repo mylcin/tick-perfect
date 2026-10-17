@@ -325,6 +325,9 @@ export const tr: Dictionary = {
     copied: 'Panoya kopyalandı',
     shareFailed: 'Paylaşılamadı. Aşağıdaki metni kopyala.',
     shareManual: 'Paylaşılacak metin',
+    image: 'Görsel',
+    imageSaved: 'Görsel kaydedildi',
+    imageFailed: 'Görsel oluşturulamadı.',
     menu: 'Ana menü',
   },
 

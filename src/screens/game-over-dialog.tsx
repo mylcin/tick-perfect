@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 
 import { Button, FOCUS } from '../components/buttons';
 import { WithEnglishNames } from '../components/english';
-import { RetryIcon, ShareIcon } from '../components/icons';
+import { ImageIcon, RetryIcon, ShareIcon } from '../components/icons';
 import { LevelMeter } from '../components/level-meter';
 import { Modal } from '../components/modal';
 import { ReserveGauge } from '../components/reserve-gauge';
@@ -16,6 +16,12 @@ import type { ScoreRecord } from '../state/progress';
 import type { EngravingId } from '../state/engravings';
 import type { Goal } from '../state/results';
 import { wholeRate, type TimingStats } from '../state/timegrapher';
+import {
+  cardBlob,
+  shareCard,
+  type CardContent,
+  type CardOutcome,
+} from '../utils/result-card';
 import { shareResult, type ShareOutcome } from '../utils/share';
 import { WATCHES, type VariantId, type WatchId } from '../watches';
 import { RankedLine } from './ranked-line';
@@ -68,6 +74,8 @@ export interface RoundResult {
   readonly engraved: readonly EngravingId[];
   /** What Share sends. */
   readonly share: string;
+  /** What the card shows. */
+  readonly card: CardContent;
   /** The ghost it raced, if any. */
   readonly ghost: GhostComparison | null;
 }
@@ -234,7 +242,26 @@ function ResultPanel({
 
   const share = async () => {
     const outcome = await shareResult(result.share);
+    setCarded(null);
     setShared(current => ({ outcome, count: (current?.count ?? 0) + 1 }));
+  };
+  // The card: drawn on demand, then to the share sheet or saved as a file.
+  const [carded, setCarded] = useState<{
+    outcome: CardOutcome;
+    count: number;
+  } | null>(null);
+  const shareImage = async () => {
+    let outcome: CardOutcome;
+    try {
+      outcome = await shareCard(
+        await cardBlob(result.card),
+        `tick-perfect-${String(result.score)}.png`,
+        result.share
+      );
+    } catch {
+      outcome = 'failed';
+    }
+    setCarded(current => ({ outcome, count: (current?.count ?? 0) + 1 }));
   };
 
   const { outcome } = result;
@@ -286,12 +313,19 @@ function ResultPanel({
         Math.round(result.timing.spread)
       )
     : null;
-  const status =
-    shared?.outcome === 'copied'
+  // The latest of Share and Image says how it went.
+  const status = carded
+    ? carded.outcome === 'saved'
+      ? t.gameOver.imageSaved
+      : carded.outcome === 'failed'
+        ? t.gameOver.imageFailed
+        : ''
+    : shared?.outcome === 'copied'
       ? t.gameOver.copied
       : failed
         ? t.gameOver.shareFailed
         : '';
+  const said = carded ?? shared;
   const chip =
     'rounded-full border px-3 py-1 text-[0.65rem] whitespace-nowrap uppercase short:tracking-[0.12em]';
 
@@ -579,10 +613,13 @@ function ResultPanel({
           {t.gameOver.share}
         </Button>
         <Button
-          variant="quiet"
-          className="col-span-2 short:px-4"
-          onClick={onMenu}
+          icon={<ImageIcon />}
+          className="short:px-4"
+          onClick={() => void shareImage()}
         >
+          {t.gameOver.image}
+        </Button>
+        <Button variant="quiet" className="short:px-4" onClick={onMenu}>
           {t.gameOver.menu}
         </Button>
       </div>
@@ -593,7 +630,7 @@ function ResultPanel({
       >
         {status}
         {/* A repeated message must change to be announced again. */}
-        {status && shared && shared.count % 2 === 0 ? ' ' : ''}
+        {status && said && said.count % 2 === 0 ? ' ' : ''}
       </p>
       {failed && (
         <textarea

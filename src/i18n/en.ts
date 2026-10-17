@@ -328,6 +328,9 @@ export const en: Dictionary = {
     copied: 'Copied to the clipboard',
     shareFailed: 'Couldn’t share. Copy the text below.',
     shareManual: 'Text to share',
+    image: 'Image',
+    imageSaved: 'Image saved',
+    imageFailed: 'Couldn’t make the image.',
     menu: 'Main menu',
   },
 

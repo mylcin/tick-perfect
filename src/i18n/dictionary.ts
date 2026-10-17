@@ -316,6 +316,10 @@ export interface Dictionary {
     readonly copied: string;
     readonly shareFailed: string;
     /** The share text's box, to copy by hand when sharing fails. */
+    /** The round as a picture, to share or save. */
+    readonly image: string;
+    readonly imageSaved: string;
+    readonly imageFailed: string;
     readonly shareManual: string;
     readonly menu: string;
   };

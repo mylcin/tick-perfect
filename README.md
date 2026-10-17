@@ -19,9 +19,9 @@ hand, speeds it up and narrows the window; one miss ends the run.
   bezel, a chronograph's start and stop, a GMT hand in the way, a
   moonphase's hidden marker, a rocking tourbillon and Endless mixing them
   all. Level up and more watches open, each left for you to find.
-- **A reason to come back.** A daily round shared by every player, challenge
-  links that replay a friend's exact round, a watchmaker's level that opens
-  the collection, certificates and colourways earned by play, and
+- **A reason to come back.** A daily round shared by every player, ghosts
+  of your best rounds to race, practice sets, a watchmaker's level that
+  opens the collection, certificates and colourways earned by play, and
   achievements engraved on the caseback. No ads, purchases or required
   accounts.
 - **Sound without samples.** The movement's tick and the repeater's gongs

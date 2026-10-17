@@ -312,15 +312,6 @@ export interface Dictionary {
     readonly certified: (certificate: string) => string;
     /** The round's rate and spread, in whole ms (rate negative early). */
     readonly timing: (rate: number, spread: number) => string;
-    readonly share: string;
-    readonly copied: string;
-    readonly shareFailed: string;
-    /** The share text's box, to copy by hand when sharing fails. */
-    /** The round as a picture, to share or save. */
-    readonly image: string;
-    readonly imageSaved: string;
-    readonly imageFailed: string;
-    readonly shareManual: string;
     readonly menu: string;
   };
 

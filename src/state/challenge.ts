@@ -1,4 +1,3 @@
-import { APP_URL } from '../utils/share';
 import { isWatchId, type WatchId } from '../watches/ids';
 import { RULES_REVISION } from '../watches/revisions';
 
@@ -19,9 +18,6 @@ export interface Challenge {
 
 /** The query parameter that carries a challenge. */
 const CHALLENGE_PARAM = 'c';
-
-/** The highest score a challenge can carry. */
-const MAX_CHALLENGE_SCORE = 9999;
 
 /** A uint32 in base 36, without leading zeros: at most 7 digits. */
 const SEED = /^(?:0|[1-9a-z][0-9a-z]{0,6})$/;
@@ -90,16 +86,6 @@ export function challengeRules(
 ): 'same' | 'earlier' | 'later' {
   if (revision === current) return 'same';
   return revision < current ? 'earlier' : 'later';
-}
-
-/** The link that opens the game on a round played here, to beat. */
-export function challengeLink(round: Omit<Challenge, 'revision'>): string {
-  const code = encodeChallenge({
-    ...round,
-    score: Math.min(round.score, MAX_CHALLENGE_SCORE),
-    revision: RULES_REVISION[round.watch],
-  });
-  return `${APP_URL}/?${CHALLENGE_PARAM}=${code}`;
 }
 
 /** What a link brought: its challenge, or word that it couldn't be read. */

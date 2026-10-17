@@ -8,18 +8,18 @@ contribution rules see [CONTRIBUTING.md](../CONTRIBUTING.md).
 
 Node.js 22.13 or newer in the 22.x line (`nvm use` reads `.nvmrc`).
 
-| Command                | What it does                                                                                    |
-| ---------------------- | ----------------------------------------------------------------------------------------------- |
-| `npm run dev`          | Dev server at http://localhost:5173, with `/api`                                                |
-| `npm run check`        | Lint, format, types, unit tests with coverage, build, size                                      |
-| `npm test`             | Unit tests once (`test:watch` to re-run on change)                                              |
-| `npm run test:e2e`     | Builds the e2e bundle and runs Playwright                                                       |
-| `npm run build`        | Type-checks, then builds into `dist/`                                                           |
-| `npm run size`         | Checks the first paint against its 400 KB gzip budget                                           |
-| `npm run thumbnails`   | Re-renders the watch thumbnails (needs `npm run dev`); `-- --card` the result cards' large ones |
-| `npm run og`           | Re-renders the link preview, `public/og.jpg` (same)                                             |
-| `npm run readme-image` | Re-renders the README's picture, `docs/images/hero.webp` (same)                                 |
-| `npm run icons`        | Re-renders the PNG app icons from `public/icons/icon.svg`                                       |
+| Command                | What it does                                                    |
+| ---------------------- | --------------------------------------------------------------- |
+| `npm run dev`          | Dev server at http://localhost:5173, with `/api`                |
+| `npm run check`        | Lint, format, types, unit tests with coverage, build, size      |
+| `npm test`             | Unit tests once (`test:watch` to re-run on change)              |
+| `npm run test:e2e`     | Builds the e2e bundle and runs Playwright                       |
+| `npm run build`        | Type-checks, then builds into `dist/`                           |
+| `npm run size`         | Checks the first paint against its 400 KB gzip budget           |
+| `npm run thumbnails`   | Re-renders the watch thumbnails (needs `npm run dev`)           |
+| `npm run og`           | Re-renders the link preview, `public/og.jpg` (same)             |
+| `npm run readme-image` | Re-renders the README's picture, `docs/images/hero.webp` (same) |
+| `npm run icons`        | Re-renders the PNG app icons from `public/icons/icon.svg`       |
 
 ## Architecture
 

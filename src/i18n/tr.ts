@@ -321,13 +321,6 @@ export const tr: Dictionary = {
     certified: certificate => `${certificate} sertifikası kazanıldı`,
     timing: (rate, spread) =>
       `${rate === 0 ? 'Tam zamanında' : `Zamanlama ${rateText(rate)}`} · ±${String(spread)} ms`,
-    share: 'Paylaş',
-    copied: 'Panoya kopyalandı',
-    shareFailed: 'Paylaşılamadı. Aşağıdaki metni kopyala.',
-    shareManual: 'Paylaşılacak metin',
-    image: 'Görsel',
-    imageSaved: 'Görsel kaydedildi',
-    imageFailed: 'Görsel oluşturulamadı.',
     menu: 'Ana menü',
   },
 

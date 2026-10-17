@@ -50,25 +50,6 @@ export function CloseIcon() {
   );
 }
 
-export function ShareIcon() {
-  return (
-    <Icon>
-      <path d="M12 15V4M8 8l4-4 4 4" />
-      <path d="M6 12v6.5A1.5 1.5 0 0 0 7.5 20h9a1.5 1.5 0 0 0 1.5-1.5V12" />
-    </Icon>
-  );
-}
-
-export function ImageIcon() {
-  return (
-    <Icon>
-      <rect x="4" y="5" width="16" height="14" rx="2" />
-      <circle cx="9" cy="10" r="1.6" />
-      <path d="M20 16l-4.5-4.5L7 19" />
-    </Icon>
-  );
-}
-
 export function RetryIcon() {
   return (
     <Icon>

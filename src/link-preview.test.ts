@@ -2,10 +2,11 @@ import { describe, expect, it } from 'vitest';
 
 import html from '../index.html?raw';
 import picture from '../public/og.jpg?inline';
-import { APP_URL } from './utils/share';
 
 // The preview a shared link unfurls into: index.html's Open Graph tags and
 // the picture they point at, public/og.jpg (scripts/render-og.js).
+
+const APP_URL = 'https://tick-perfect.vercel.app';
 
 /** The content of each <meta> in index.html, by its property or name. */
 function metas(): Map<string, string> {

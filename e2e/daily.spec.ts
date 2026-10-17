@@ -1,12 +1,8 @@
 import { expect, test, type Page } from '@playwright/test';
 
-import { dailySeed, type HitQuality, type Segment } from '../src/game';
+import { dailySeed, type Segment } from '../src/game';
 import { en } from '../src/i18n/en';
-import {
-  challengeRules,
-  encodeChallenge,
-  parseChallenge,
-} from '../src/state/challenge';
+import { challengeRules, encodeChallenge } from '../src/state/challenge';
 import { SAVE_KEY, SAVE_VERSION } from '../src/state/saved';
 import { RULES_REVISION } from '../src/watches/revisions';
 import {
@@ -19,7 +15,6 @@ import {
   SCENE_TIMEOUT,
   seedProgress,
   setDate,
-  startGame,
   waitForPhase,
 } from './helpers';
 
@@ -54,61 +49,6 @@ async function startDaily(page: Page) {
   });
   await daily.click();
   await waitForPhase(page, 'playing');
-}
-
-/** Keeps what the page shares, through the share sheet or the clipboard. */
-async function captureShares(page: Page) {
-  await page.addInitScript(() => {
-    const shared: string[] = [];
-    Object.assign(window, { __shared: shared });
-    Object.defineProperty(navigator, 'share', {
-      configurable: true,
-      value: (data: ShareData) => {
-        shared.push(data.text ?? '');
-        return Promise.resolve();
-      },
-    });
-    Object.defineProperty(navigator.clipboard, 'writeText', {
-      configurable: true,
-      value: (text: string) => {
-        shared.push(text);
-        return Promise.resolve();
-      },
-    });
-  });
-}
-
-async function lastShared(page: Page): Promise<string> {
-  await expect
-    .poll(() =>
-      page.evaluate(
-        () => (window as unknown as { __shared: string[] }).__shared.length
-      )
-    )
-    .toBeGreaterThan(0);
-  return page.evaluate(
-    () => (window as unknown as { __shared: string[] }).__shared.at(-1) ?? ''
-  );
-}
-
-/** The challenge a shared text's last line links to. */
-function linkedChallenge(text: string) {
-  const link = new URL(text.split('\n').at(-1) ?? '');
-  return parseChallenge(link.searchParams.get('c'));
-}
-
-/** How the round's hits landed, read through the e2e hook. */
-function qualities(page: Page): Promise<readonly HitQuality[]> {
-  return page.evaluate(
-    () =>
-      (
-        window as unknown as {
-          __tickPerfect: {
-            snapshot: () => { qualities: readonly HitQuality[] };
-          };
-        }
-      ).__tickPerfect.snapshot().qualities
-  );
 }
 
 /** A sweep with its start time zeroed: that differs from page to page. */
@@ -257,7 +197,6 @@ test.describe('on 2 October 2026', () => {
     isMobile,
   }) => {
     test.slow();
-    await captureShares(page);
     await page.goto('/');
     await startDaily(page);
     await pressInPage(page, { touch: isMobile, presses: 3 });
@@ -267,7 +206,6 @@ test.describe('on 2 October 2026', () => {
     const over = await gameState(page);
     if (over.phase !== 'gameOver') throw new Error('The round is not over');
     const { score } = over.round;
-    const marks = await qualities(page);
 
     await expect(page.getByTestId('game-over-score')).toHaveText(String(score));
     await expect(page.getByTestId('game-over-best')).toHaveAttribute(
@@ -292,22 +230,6 @@ test.describe('on 2 October 2026', () => {
         `Daily #2 over\\. Score ${String(score)}\\..*Power reserve 1 day\\. Wound a day\\. (Timing \\d+ ms (early|late)|Right on time) · ±\\d+ ms\\.$`
       )
     );
-
-    // Share: the day's best, its trace, and a challenge on today's Daily.
-    await results.getByRole('button', { name: 'Share' }).click();
-    const text = await lastShared(page);
-    const [heading, ...rest] = text.split('\n');
-    expect(heading).toBe(`Tick Perfect #2 · ${String(score)}`);
-    const trace = rest.slice(0, -1).join('');
-    expect(trace).toBe(
-      marks.map(quality => (quality === 'perfect' ? '◆' : '◇')).join('')
-    );
-    expect(linkedChallenge(text)).toEqual({
-      watch: 'chronograph',
-      seed: TODAYS_SEED,
-      score,
-      revision: RULES_REVISION.chronograph,
-    });
 
     // Retry replays the same targets.
     await results.getByRole('button', { name: 'Retry' }).click();
@@ -516,29 +438,5 @@ test.describe('on 2 October 2026', () => {
     await expect(results).toHaveAccessibleDescription(
       /Game over\. Score 0\. Power reserve 1 day\.$/
     );
-  });
-
-  test('a collection round shares a challenge on its own seed', async ({
-    page,
-    isMobile,
-  }) => {
-    await captureShares(page);
-    await page.goto('/');
-    await startGame(page);
-    await pressInPage(page, { touch: isMobile, presses: 1 });
-    const results = page.getByRole('dialog', { name: 'Game over' });
-    await expect(results).toBeVisible({ timeout: 15_000 });
-    const seed = await roundSeed(page);
-    const score = Number(await page.getByTestId('game-over-score').innerText());
-
-    await results.getByRole('button', { name: 'Share' }).click();
-    const text = await lastShared(page);
-    expect(text.split('\n')[0]).toBe(`Tick Perfect · Diver · ${String(score)}`);
-    expect(linkedChallenge(text)).toEqual({
-      watch: 'diver',
-      seed,
-      score,
-      revision: RULES_REVISION.diver,
-    });
   });
 });

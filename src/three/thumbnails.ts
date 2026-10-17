@@ -16,11 +16,3 @@ export function thumbnailUrl(watch: WatchId, variant: VariantId): string {
     ? `/watches/${watch}.webp`
     : `/watches/${watch}-${variant}.webp`;
 }
-
-/**
- * The same, drawn large for result cards (render-thumbnails.js --card);
- * fetched only when a card is made, never cached for offline play.
- */
-export function cardImageUrl(watch: WatchId, variant: VariantId): string {
-  return thumbnailUrl(watch, variant).replace('/watches/', '/watches/card/');
-}

@@ -125,10 +125,8 @@ A watch is data plus, at most, one new rule. Work through these in order:
 npm run thumbnails -- http://127.0.0.1:5173 <watch> <watch>-<variant>
 ```
 
-They land in `public/watches/`. Render the result cards' large ones the
-same way with `--card` first (`npm run thumbnails -- --card …`); they land
-in `public/watches/card/`. Locked watches use the standard image as a
-silhouette, so there is nothing else to draw.
+They land in `public/watches/`. Locked watches use the standard image as
+a silhouette, so there is nothing else to draw.
 
 11. **Docs.** Add a line to the changelog. The README leaves the watches
     for players to find, so it needs no new picture.

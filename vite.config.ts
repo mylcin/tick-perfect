@@ -213,15 +213,13 @@ export default defineConfig(({ command, mode }) => {
         },
         workbox: {
           globPatterns: ['**/*.{js,css,html,svg,png,webp,hdr}'],
-          // Install-time artwork the game itself never shows, the link
-          // preview's picture, which only the sites unfurling a link fetch,
-          // and the result cards' large watches, fetched when one is made.
+          // Install-time artwork the game itself never shows, and the link
+          // preview's picture, which only the sites unfurling a link fetch.
           globIgnores: [
             'icons/icon-192.png',
             'icons/icon-512.png',
             'icons/apple-touch-icon.png',
             'og.jpg',
-            'watches/card/**',
           ],
           navigateFallback: '/index.html',
           // The API answers for itself, online or not at all.

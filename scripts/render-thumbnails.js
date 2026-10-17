@@ -2,33 +2,22 @@
 // the strip costs no GPU time at runtime:
 //
 //   npm run dev          (in another terminal)
-//   node scripts/render-thumbnails.js [--card] [http://127.0.0.1:5173] [names...]
+//   node scripts/render-thumbnails.js [http://127.0.0.1:5173] [names...]
 //
 // Each watch is drawn on the development-only thumbnail.html page and saved
 // as public/watches/<id>.webp, and each of its variants as
 // <id>-<variant>.webp. Names (e.g. `diver gmt-blueBlack`) render only
 // those. Locked watches use the standard image, turned into a silhouette
-// with CSS. With --card they are drawn larger, for the result cards, into
-// public/watches/card/ (left out of the offline cache).
+// with CSS.
 
 import { writeFileSync, mkdirSync } from 'node:fs';
 import path from 'node:path';
 
 import { chromium } from '@playwright/test';
 
-const args = process.argv.slice(2);
-const CARD = args.includes('--card');
-const [ORIGIN = 'http://127.0.0.1:5173', ...ONLY] = args.filter(
-  arg => arg !== '--card'
-);
-const OUT = path.resolve(
-  import.meta.dirname,
-  '..',
-  'public',
-  'watches',
-  ...(CARD ? ['card'] : [])
-);
-const SIZE = CARD ? 480 : 192;
+const [ORIGIN = 'http://127.0.0.1:5173', ...ONLY] = process.argv.slice(2);
+const OUT = path.resolve(import.meta.dirname, '..', 'public', 'watches');
+const SIZE = 192;
 const QUALITY = 0.86;
 
 mkdirSync(OUT, { recursive: true });

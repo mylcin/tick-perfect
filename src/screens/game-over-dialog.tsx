@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 
-import { Button, FOCUS } from '../components/buttons';
+import { Button } from '../components/buttons';
 import { WithEnglishNames } from '../components/english';
-import { ImageIcon, RetryIcon, ShareIcon } from '../components/icons';
+import { RetryIcon } from '../components/icons';
 import { LevelMeter } from '../components/level-meter';
 import { Modal } from '../components/modal';
 import { ReserveGauge } from '../components/reserve-gauge';
@@ -16,13 +16,6 @@ import type { ScoreRecord } from '../state/progress';
 import type { EngravingId } from '../state/engravings';
 import type { Goal } from '../state/results';
 import { wholeRate, type TimingStats } from '../state/timegrapher';
-import {
-  cardBlob,
-  shareCard,
-  type CardContent,
-  type CardOutcome,
-} from '../utils/result-card';
-import { shareResult, type ShareOutcome } from '../utils/share';
 import { WATCHES, type VariantId, type WatchId } from '../watches';
 import { RankedLine } from './ranked-line';
 import { beatText, dailyResultText } from './result-text';
@@ -72,10 +65,6 @@ export interface RoundResult {
   readonly outcome: RoundOutcome;
   /** What the round engraved on the casebacks. */
   readonly engraved: readonly EngravingId[];
-  /** What Share sends. */
-  readonly share: string;
-  /** What the card shows. */
-  readonly card: CardContent;
   /** The ghost it raced, if any. */
   readonly ghost: GhostComparison | null;
 }
@@ -192,7 +181,7 @@ function shownFor(t: Dictionary, result: RoundResult) {
  */
 const ARM_MS = 500;
 
-/** Mounted afresh for every result, so the share status starts empty. */
+/** Mounted afresh for every result. */
 function ResultPanel({
   t,
   result,
@@ -206,15 +195,9 @@ function ResultPanel({
   onPlayWatch: (watch: WatchId) => void;
   onMenu: () => void;
 }) {
-  // Each press of Share counts, so a repeat is announced again.
-  const [shared, setShared] = useState<{
-    outcome: ShareOutcome;
-    count: number;
-  } | null>(null);
   const [armed, setArmed] = useState(false);
   const storageWorks = useStorageWorks();
   const panel = useRef<HTMLDivElement>(null);
-  const shareText = useRef<HTMLTextAreaElement>(null);
   useTextTop(panel);
   // As the results come in; they are gone long before it would be stale.
   // A round that ran past midnight says the next Daily is out instead.
@@ -232,38 +215,6 @@ function ResultPanel({
       clearTimeout(timer);
     };
   }, []);
-  const failed = shared?.outcome === 'failed';
-  // Nothing could take the text: hand it over, ready to copy.
-  useEffect(() => {
-    if (!failed) return;
-    shareText.current?.focus();
-    shareText.current?.select();
-  }, [failed]);
-
-  const share = async () => {
-    const outcome = await shareResult(result.share);
-    setCarded(null);
-    setShared(current => ({ outcome, count: (current?.count ?? 0) + 1 }));
-  };
-  // The card: drawn on demand, then to the share sheet or saved as a file.
-  const [carded, setCarded] = useState<{
-    outcome: CardOutcome;
-    count: number;
-  } | null>(null);
-  const shareImage = async () => {
-    let outcome: CardOutcome;
-    try {
-      outcome = await shareCard(
-        await cardBlob(result.card),
-        `tick-perfect-${String(result.score)}.png`,
-        result.share
-      );
-    } catch {
-      outcome = 'failed';
-    }
-    setCarded(current => ({ outcome, count: (current?.count ?? 0) + 1 }));
-  };
-
   const { outcome } = result;
   const shown = shownFor(t, result);
   const collection = outcome.kind === 'collection' ? outcome : null;
@@ -313,19 +264,6 @@ function ResultPanel({
         Math.round(result.timing.spread)
       )
     : null;
-  // The latest of Share and Image says how it went.
-  const status = carded
-    ? carded.outcome === 'saved'
-      ? t.gameOver.imageSaved
-      : carded.outcome === 'failed'
-        ? t.gameOver.imageFailed
-        : ''
-    : shared?.outcome === 'copied'
-      ? t.gameOver.copied
-      : failed
-        ? t.gameOver.shareFailed
-        : '';
-  const said = carded ?? shared;
   const chip =
     'rounded-full border px-3 py-1 text-[0.65rem] whitespace-nowrap uppercase short:tracking-[0.12em]';
 
@@ -593,8 +531,6 @@ function ResultPanel({
         </p>
       )}
 
-      {/* Main menu takes a row of its own, or joins the row where height
-          is short (a phone held sideways). */}
       <div className="mt-5 grid w-full max-w-sm grid-cols-2 gap-x-3 gap-y-2 short:mt-3 short:flex short:max-w-none short:flex-wrap short:justify-center short:gap-2 compact:mt-3">
         <Button
           variant="primary"
@@ -605,44 +541,10 @@ function ResultPanel({
         >
           {t.gameOver.retry}
         </Button>
-        <Button
-          icon={<ShareIcon />}
-          className="short:px-4"
-          onClick={() => void share()}
-        >
-          {t.gameOver.share}
-        </Button>
-        <Button
-          icon={<ImageIcon />}
-          className="short:px-4"
-          onClick={() => void shareImage()}
-        >
-          {t.gameOver.image}
-        </Button>
         <Button variant="quiet" className="short:px-4" onClick={onMenu}>
           {t.gameOver.menu}
         </Button>
       </div>
-      <p
-        role="status"
-        data-testid="share-status"
-        className="min-h-5 text-xs text-ink-3"
-      >
-        {status}
-        {/* A repeated message must change to be announced again. */}
-        {status && said && said.count % 2 === 0 ? ' ' : ''}
-      </p>
-      {failed && (
-        <textarea
-          ref={shareText}
-          readOnly
-          data-testid="share-text"
-          aria-label={t.gameOver.shareManual}
-          value={result.share}
-          rows={result.share.split('\n').length}
-          className={`mt-1 w-full max-w-sm resize-none rounded-xl border border-ink/15 bg-surface/90 px-3 py-2 text-xs text-ink ${FOCUS}`}
-        />
-      )}
     </div>
   );
 }

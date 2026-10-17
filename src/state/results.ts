@@ -1,10 +1,5 @@
-import { dailySeed, type HitQuality } from '../game';
-import { shareText } from '../utils/share';
 import { WATCH_ORDER, type WatchId } from '../watches/ids';
 import { nextCertificate, type CertificateTier } from './certificates';
-import { challengeLink } from './challenge';
-import { dailyWatch, qualitiesOf, type DailyRecord } from './daily';
-import type { RoundMode } from './modes';
 import { levelFor } from './levels';
 import {
   bestScore,
@@ -83,50 +78,4 @@ export function goalAfter(
         nearest === null || goal.points < nearest.points ? goal : nearest,
       null
     );
-}
-
-/**
- * What sharing a finished round says. A Daily shares the day's best and
- * that run's trace (`daily`, the saved record, has both), with a challenge
- * on the Daily; any other round shares itself, with a challenge to play the
- * same seed on the same watch.
- */
-export function roundShareText({
-  mode,
-  watch,
-  watchName,
-  seed,
-  score,
-  qualities,
-  daily,
-}: {
-  mode: RoundMode;
-  watch: WatchId;
-  watchName: string;
-  seed: number;
-  score: number;
-  qualities: readonly HitQuality[];
-  daily: DailyRecord | null;
-}): string {
-  if (mode.kind === 'daily') {
-    const { number } = mode;
-    const best = daily?.number === number ? daily : null;
-    const shared = best?.best ?? score;
-    return shareText({
-      heading: { kind: 'daily', number },
-      score: shared,
-      qualities: best ? qualitiesOf(best.marks) : qualities,
-      link: challengeLink({
-        watch: dailyWatch(number),
-        seed: dailySeed(number),
-        score: shared,
-      }),
-    });
-  }
-  return shareText({
-    heading: { kind: 'watch', watch: watchName },
-    score,
-    qualities,
-    link: challengeLink({ watch, seed, score }),
-  });
 }

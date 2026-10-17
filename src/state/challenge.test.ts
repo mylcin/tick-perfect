@@ -1,10 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
-import { APP_URL } from '../utils/share';
 import { WATCH_ORDER } from '../watches/ids';
 import { RULES_REVISION } from '../watches/revisions';
 import {
-  challengeLink,
   challengeRules,
   encodeChallenge,
   parseChallenge,
@@ -118,26 +116,6 @@ describe('challengeRules', () => {
       const revision = RULES_REVISION[watch];
       expect(challengeRules({ ...challenge, watch, revision })).toBe('same');
     }
-  });
-});
-
-describe('challengeLink', () => {
-  it('links to the game with the challenge, on this version’s rules', () => {
-    expect(challengeLink({ watch: 'diver', seed: 35, score: 23 })).toBe(
-      `${APP_URL}/?c=diver.z.23.${String(RULES_REVISION.diver)}`
-    );
-    expect(challengeLink({ watch: 'gmt', seed: 35, score: 23 })).toBe(
-      `${APP_URL}/?c=gmt.z.23.${String(RULES_REVISION.gmt)}`
-    );
-  });
-
-  it('caps a score past what a link can carry', () => {
-    const link = challengeLink({ watch: 'diver', seed: 35, score: 12_345 });
-    expect(link).toBe(
-      `${APP_URL}/?c=diver.z.9999.${String(RULES_REVISION.diver)}`
-    );
-    const code = new URL(link).searchParams.get('c');
-    expect(parseChallenge(code)?.score).toBe(9999);
   });
 });
 

@@ -8,7 +8,7 @@ import type { Language } from '../i18n';
 // Paragraphs may hold links as [text](url) and **bold** text.
 
 /** When the notice last changed, as YYYY-MM-DD. */
-const NOTICE_DATE = '2026-10-11';
+const NOTICE_DATE = '2026-10-18';
 
 export type Block = string | { readonly list: readonly string[] };
 
@@ -81,7 +81,6 @@ function english(facts: NoticeFacts): Notice {
         `Your progress, best scores, settings and timing statistics stay in your browser’s storage, on your device. They are not sent to us${online ? ' unless you sign in (below)' : ''}. Clearing this site’s data in your browser deletes them.`,
         'Your browser also keeps a copy of the game’s files, so it plays offline. The game uses no cookies, no analytics, no advertising and no tracking.',
         `The game is served by ${VERCEL}. Like any web server, it processes your network (IP) address and the details of each request, such as the page and your browser, to deliver the game and protect it from abuse, and keeps them in its logs for a short time. This rests on our legitimate interest in running the game securely (GDPR Art. 6(1)(f); KVKK Art. 5(2)(f)).`,
-        'Challenge links and share cards are made on your device and hold only the watch (or the Daily’s number), the round, the score, the order of your Perfects and plain hits, and the version of the watch’s rules. They go wherever you choose to send them.',
         'A backup of your progress, made in the settings, is a file saved on your device, holding the same progress as above but not your settings. It goes nowhere unless you send it, and restoring one reads it on your device.',
       ],
     },
@@ -245,7 +244,6 @@ function turkish(facts: NoticeFacts): Notice {
         `İlerlemeniz, en iyi skorlarınız, ayarlarınız ve zamanlama istatistikleriniz cihazınızda, tarayıcınızın depolama alanında kalır; ${online ? 'giriş yapmadıkça (aşağıda) ' : ''}bize gönderilmez. Tarayıcınızda bu sitenin verilerini temizlemek onları siler.`,
         'Tarayıcınız oyunun dosyalarının bir kopyasını da saklar; böylece oyun çevrimdışı çalışır. Oyun çerez, analiz, reklam ya da izleme kullanmaz.',
         `Oyunu ${VERCEL} sunar. Her web sunucusu gibi, oyunu size ulaştırmak ve kötüye kullanıma karşı korumak için ağ (IP) adresinizi ve her isteğin ayrıntılarını (açılan sayfa, tarayıcınız gibi) işler ve kayıtlarında kısa bir süre tutar. Hukuki sebep, oyunu güvenli biçimde işletmekteki meşru menfaatimizdir (KVKK m. 5/2-f; GDPR m. 6/1-f).`,
-        'Meydan okuma bağlantıları ve paylaşım kartları cihazınızda oluşturulur; yalnızca saati (ya da Daily numarasını), turu, skoru, Perfect ve sıradan isabetlerinizin sırasını ve saatin kurallarının sürümünü içerir. Nereye gönderileceğini siz seçersiniz.',
         'Ayarlardan aldığınız ilerleme yedeği, cihazınıza kaydedilen bir dosyadır; yukarıdaki ilerlemeyi içerir, ayarlarınızı içermez. Siz göndermedikçe hiçbir yere gitmez; geri yüklerken de cihazınızda okunur.',
       ],
     },

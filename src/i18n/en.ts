@@ -324,13 +324,6 @@ export const en: Dictionary = {
     certified: certificate => `${certificate} certificate earned`,
     timing: (rate, spread) =>
       `${rate === 0 ? 'Right on time' : `Timing ${rateText(rate)}`} · ±${String(spread)} ms`,
-    share: 'Share',
-    copied: 'Copied to the clipboard',
-    shareFailed: 'Couldn’t share. Copy the text below.',
-    shareManual: 'Text to share',
-    image: 'Image',
-    imageSaved: 'Image saved',
-    imageFailed: 'Couldn’t make the image.',
     menu: 'Main menu',
   },
 

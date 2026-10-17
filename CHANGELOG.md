@@ -46,13 +46,6 @@ uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   with that day's best, the run of days played and how many were. Each
   Daily's best is kept for 60 days, and follows the player like the rest
   of their progress.
-- **A result card.** Image, beside Share on the results, draws the round
-  as a square picture in the studio's colours: the watch in the variant
-  worn, the score beside the best (the day's best, or the score to beat),
-  what it earned and its trace. It goes to the share sheet with the text
-  where files can be shared, and is saved as a file elsewhere. Nothing
-  about the player is on it. Its large watch pictures are fetched only
-  when a card is made, never cached for offline play.
 - **Ghosts.** A new best round is kept as a ghost: its seed and the
   moments of its taps, a couple of kB on the device. Race your best, from
   the title, plays that round's targets again with its ghost's hand
@@ -110,6 +103,11 @@ uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   unlocked its watch: until then its card says which watch to unlock.
 - The Grand Complication's travel-time hand is a fine stem with a small
   openwork arrowhead, its barbs swept back, on a finer dark edge.
+
+### Removed
+
+- Share on the results, and with it the challenge links the game made.
+  Links already sent still open their round.
 
 ## [1.0.0] - 2026-10-11
 

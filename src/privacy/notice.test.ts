@@ -95,8 +95,8 @@ describe('the privacy notice', () => {
   });
 
   it('dates itself in each language', () => {
-    expect(NOTICES.en(ONLINE).updated).toBe('Last updated 11 October 2026');
-    expect(NOTICES.tr(ONLINE).updated).toBe('Son güncelleme: 11 Ekim 2026');
+    expect(NOTICES.en(ONLINE).updated).toBe('Last updated 18 October 2026');
+    expect(NOTICES.tr(ONLINE).updated).toBe('Son güncelleme: 18 Ekim 2026');
   });
 
   it('says what is public, and how long things are kept', () => {

@@ -259,28 +259,35 @@ export async function submitRound(
      from game.rounds where id = $1 and user_id = $2`,
     [id, player.id]
   );
+  const alreadyIn = () =>
+    new ApiError(409, 'alreadyIn', 'That round is already in');
   if (!round) throw new ApiError(404, 'noRound', 'No such round');
-  if (round.status !== 'issued') {
-    throw new ApiError(409, 'alreadyIn', 'That round is already in');
-  }
+  if (round.status !== 'issued') throw alreadyIn();
   if (round.expires_at <= now) {
     await deps.sql.query(
-      `update game.rounds set status = 'abandoned' where id = $1`,
+      `update game.rounds set status = 'abandoned'
+       where id = $1 and status = 'issued'`,
       [id]
     );
     throw new ApiError(410, 'expired', 'That round has expired');
   }
 
+  // Every write below takes the round only while it is still issued: two
+  // submits sent at once (on separate instances) both pass the check above,
+  // and only the first to write may count.
+
   // A refused round keeps why, never its log: anyone signed in could
   // otherwise fill the database with logs that were never going to count.
   const reject = async (reason: string) => {
-    await deps.sql.query(
+    const taken = await deps.sql.query(
       `update game.rounds
        set status = 'rejected', review_note = $2, submitted_at = $3,
            client_version = $4
-       where id = $1`,
+       where id = $1 and status = 'issued'
+       returning id`,
       [id, reason, now, clientVersion]
     );
+    if (taken.length === 0) throw alreadyIn();
     return json({ status: 'rejected', reason });
   };
 
@@ -302,12 +309,13 @@ export async function submitRound(
     result.hits >= BOT_MIN_HITS && spread < BOT_SPREAD_MS
       ? 'flagged'
       : 'verified';
-  await deps.sql.query(
+  const taken = await deps.sql.query(
     `update game.rounds
      set status = $2, submitted_at = $3, log = $4::jsonb, score = $5,
          hits = $6, perfects = $7, best_streak = $8, timing_spread = $9,
          client_version = $10
-     where id = $1`,
+     where id = $1 and status = 'issued'
+     returning id`,
     [
       id,
       status,
@@ -321,6 +329,7 @@ export async function submitRound(
       clientVersion,
     ]
   );
+  if (taken.length === 0) throw alreadyIn();
   const board = boardOf(round);
   if (status === 'verified') await putOnBoard(deps, round, result.score, now);
   const standing = await standingOn(deps, board, player.id);

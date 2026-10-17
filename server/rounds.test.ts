@@ -253,6 +253,41 @@ describe('sending a round back', () => {
     expect((await submit(ada.token, ticket.id, payload)).status).toBe(409);
   });
 
+  it('takes a round in once, even when another submit lands meanwhile', async () => {
+    const { token } = await signIn(deps);
+    const { ticket } = await start(token);
+    const round = play(ticket);
+    // Another instance takes the round in between this one's check and its
+    // write, as two submits sent at once can on separate connections.
+    const { sql } = deps;
+    let raced = false;
+    const racing = {
+      ...deps,
+      sql: {
+        ...sql,
+        query: async <Row>(text: string, params?: readonly unknown[]) => {
+          if (!raced && text.includes('set status = $2')) {
+            raced = true;
+            await sql.query(
+              `update game.rounds set status = 'verified' where id = $1`,
+              [ticket.id]
+            );
+          }
+          return sql.query<Row>(text, params);
+        },
+      },
+    };
+    const response = await handle(
+      apiRequest('POST', `/rounds/${ticket.id}`, {
+        token,
+        body: { log: round.log, score: round.score },
+      }),
+      racing
+    );
+    expect(raced).toBe(true);
+    expect(response.status).toBe(409);
+  });
+
   it('lets a round expire', async () => {
     const { token } = await signIn(deps);
     const { ticket } = await start(token);

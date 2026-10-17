@@ -29,6 +29,7 @@ import {
 import { CloudCover } from './parts/cloud-cover';
 import { Cyclops } from './parts/cyclops';
 import { Display } from './parts/display';
+import { GhostHand } from './parts/ghost-hand';
 import { GmtHand } from './parts/gmt-hand';
 import { Markers } from './parts/markers';
 import { Pushers } from './parts/pushers';
@@ -73,6 +74,8 @@ const CROWN_SPEED = 50;
  * one below (a GMT hand rides between minutes and seconds).
  */
 const HAND_Z = { hour: 0.026, minute: 0.044, seconds: 0.079 } as const;
+/** A raced ghost's hand rides just under the seconds hand. */
+const GHOST_BELOW = 0.006;
 /** A skeleton's date window stands on a bridge, above the movement. */
 const SKELETON_DATE_Z = 0.004;
 
@@ -571,6 +574,11 @@ export function WatchModel({
         {gmt && g.gmtHand && (
           <GmtHand geometry={g.gmtHand} materials={m} restAngle={gmtRest} />
         )}
+        <GhostHand
+          geometry={g.secondsHand.metal}
+          materials={m}
+          z={HAND_Z.seconds - GHOST_BELOW}
+        />
         <group ref={secondsHand} position-z={HAND_Z.seconds}>
           <mesh geometry={g.secondsHand.metal} material={m.secondsHand} />
           {g.secondsHand.lume && (

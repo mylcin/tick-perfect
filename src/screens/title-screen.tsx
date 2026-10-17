@@ -129,6 +129,8 @@ export function TitleScreen() {
   const turned = caseback && unlocked && scene !== 'failed';
   const engravedCount = engravedOn(engravings, watch).length;
   const best = bestScore(progress, watch);
+  // The best round kept to race, once one has been played since ghosts.
+  const ghost = useAppState(state => state.ghosts.best[watch] ?? null);
   const tier = certificateFor(best);
   // Until a first score anywhere, the line under the name says how the
   // game itself is played.
@@ -533,21 +535,40 @@ export function TitleScreen() {
                 : t.collection.locked}
           </Button>
         )}
-        {/* Practice on the watch on show: slowly until it is certified. */}
+        {/* Practice on the watch on show (slowly until it is certified),
+            or its best round again, against that round's ghost. */}
         {!failed && unlocked && (
-          <Button
-            variant="quiet"
-            aria-disabled={!ready}
-            className="-my-2 min-h-10! px-4! text-xs! tracking-[0.12em]! uppercase short:-my-1"
-            onClick={() => {
-              startMode({
-                kind: 'practice',
-                pace: tier === null ? 'slow' : 'normal',
-              });
-            }}
-          >
-            {t.practice.open}
-          </Button>
+          <div className="-my-2 flex items-center gap-1 short:-my-1">
+            <Button
+              variant="quiet"
+              aria-disabled={!ready}
+              className="min-h-10! px-4! text-xs! tracking-[0.12em]! uppercase"
+              onClick={() => {
+                startMode({
+                  kind: 'practice',
+                  pace: tier === null ? 'slow' : 'normal',
+                });
+              }}
+            >
+              {t.practice.open}
+            </Button>
+            {ghost && (
+              <Button
+                variant="quiet"
+                aria-disabled={!ready}
+                className="min-h-10! px-4! text-xs! tracking-[0.12em]! uppercase"
+                onClick={() => {
+                  startMode({
+                    kind: 'ghost',
+                    seed: ghost.seed,
+                    toBeat: ghost.score,
+                  });
+                }}
+              >
+                {t.ghost.open}
+              </Button>
+            )}
+          </div>
         )}
         {!failed && (
           <div className="flex flex-col items-center gap-1">

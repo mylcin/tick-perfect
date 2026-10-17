@@ -85,6 +85,8 @@ export interface WatchMaterials {
   readonly crack: MeshBasicMaterial;
   /** The cloud a Pilot's hand is lost in; faded in by the frame loop. */
   readonly cloud: MeshBasicMaterial;
+  /** A raced ghost's seconds hand: the hand's colour, see-through. */
+  readonly ghostHand: MeshBasicMaterial;
   /**
    * The metals and lume again, for instanced meshes (hour markers, bracelet
    * links). three.js builds an instanced mesh its own shader program, so a
@@ -266,6 +268,9 @@ function strapMaterial(
 }
 
 /** An additive layer, invisible until the frame loop raises its opacity. */
+/** How much of a raced ghost's hand shows: there, but never the hand. */
+const GHOST_OPACITY = 0.32;
+
 function overlay(map?: Texture): MeshBasicMaterial {
   return new MeshBasicMaterial({
     ...(map && { map }),
@@ -523,6 +528,12 @@ export function createWatchMaterials(spec: WatchSpec): WatchMaterials {
       depthWrite: false,
       opacity: 0,
     }),
+    ghostHand: new MeshBasicMaterial({
+      color: spec.hands.secondsColor,
+      transparent: true,
+      depthWrite: false,
+      opacity: GHOST_OPACITY,
+    }),
   };
 
   const instanced = instancedCopies(materials);
@@ -615,6 +626,7 @@ export function createSilhouetteMaterials(): WatchMaterials {
     hitFlash: hidden,
     crack: hidden,
     cloud: hidden,
+    ghostHand: hidden,
     instanced: {
       caseMetal: instancedShadow,
       polishedMetal: instancedShadow,

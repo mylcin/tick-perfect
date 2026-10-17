@@ -324,3 +324,15 @@ describe('a practice controller', () => {
     expect(controller.pose(over + 100).crack).toBeNull();
   });
 });
+
+describe('a raced ghost', () => {
+  it('draws its hand with the round’s, once the round is on', () => {
+    const controller = createGameController(DIVER_RULES);
+    controller.setGhost({ angle: now => now / 100 });
+    expect(controller.pose(T0).ghost).toBeNull();
+    controller.dispatch({ type: 'start', time: T0, seed: 7 });
+    expect(controller.pose(T0 + 500).ghost).toBe((T0 + 500) / 100);
+    controller.setGhost(null);
+    expect(controller.pose(T0 + 600).ghost).toBeNull();
+  });
+});

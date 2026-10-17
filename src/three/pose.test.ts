@@ -51,6 +51,7 @@ describe('poseFromGame', () => {
       hacked: false,
       cloud: null,
       countdown: null,
+      ghost: null,
     });
   });
 

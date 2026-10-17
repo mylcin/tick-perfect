@@ -134,6 +134,23 @@ export const en: Dictionary = {
     menu: 'Main menu',
   },
 
+  ghost: {
+    open: 'Race your best',
+    title: 'Against your best',
+    hud: score => `Ghost ${String(score)}`,
+    gap: gap =>
+      gap === 0 ? '±0' : gap > 0 ? `+${String(gap)}` : `−${String(-gap)}`,
+    against: 'Against your ghost',
+    you: 'You',
+    them: 'Ghost',
+    verdict: gap =>
+      gap > 0
+        ? `You beat your ghost by ${String(gap)}.`
+        : gap < 0
+          ? `Your ghost stays ahead by ${String(-gap)}.`
+          : 'Level with your ghost.',
+  },
+
   challenge: {
     title: 'Challenge',
     card: (watch, score) => `Challenge · ${watch} · Beat ${String(score)}`,

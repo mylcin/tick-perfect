@@ -28,6 +28,7 @@ import {
   type ScoreRecord,
 } from './progress';
 import { mergeDailies, recordDailyBest } from './daily-archive';
+import { mergeGhosts, type DailyGhost, type GhostRun } from './ghost';
 import { addLine, mergeHistory, type RoundLine } from './history';
 import { mergeReserve } from './reserve';
 import { restoreSaved, SAVE_KEY, SAVE_VERSION, type SavedState } from './saved';
@@ -60,6 +61,10 @@ export interface AppState extends SavedState {
   ) => void;
   /** Adds a finished round's line to `watch`'s history, in any mode. */
   readonly recordLine: (watch: WatchId, line: RoundLine) => void;
+  /** Keeps a new best round on `watch` to race. */
+  readonly keepGhost: (watch: WatchId, ghost: GhostRun) => void;
+  /** Keeps the day's new best Daily round to race on its retries. */
+  readonly keepDailyGhost: (ghost: DailyGhost) => void;
   /**
    * Engraves what a finished round on `watch` earned (null: what the
    * collection alone has), once its score and timing are saved. Returns
@@ -181,6 +186,7 @@ function progressKeepingStorage(
             ...mergeEarned(value.state, restored),
             tips: mergeTips(value.state.tips, restored.tips),
             history: mergeHistory(value.state.history, restored.history),
+            ghosts: mergeGhosts(value.state.ghosts, restored.ghosts),
           }
         : {};
       storage.setItem(
@@ -242,6 +248,17 @@ export function createAppStore(
         recordLine: (watch, line) => {
           set(state => ({ history: addLine(state.history, watch, line) }));
         },
+        keepGhost: (watch, ghost) => {
+          set(state => ({
+            ghosts: {
+              ...state.ghosts,
+              best: { ...state.ghosts.best, [watch]: ghost },
+            },
+          }));
+        },
+        keepDailyGhost: ghost => {
+          set(state => ({ ghosts: { ...state.ghosts, daily: ghost } }));
+        },
         engrave: (watch, round) => {
           const state = get();
           const keys = newEngravings(state.engravings, state, watch, round);
@@ -293,6 +310,7 @@ export function createAppStore(
             engravings: defaults.engravings,
             dailies: defaults.dailies,
             history: defaults.history,
+            ghosts: defaults.ghosts,
           });
         },
       }),
@@ -311,6 +329,7 @@ export function createAppStore(
           engravings,
           dailies,
           history,
+          ghosts,
           tips,
         }): SavedState => ({
           settings,
@@ -323,6 +342,7 @@ export function createAppStore(
           engravings,
           dailies,
           history,
+          ghosts,
           tips,
         }),
         // Older versions are read field by field like any other saved data.
@@ -337,6 +357,7 @@ export function createAppStore(
             ...mergeEarned(current, restored),
             tips: mergeTips(current.tips, restored.tips),
             history: mergeHistory(current.history, restored.history),
+            ghosts: mergeGhosts(current.ghosts, restored.ghosts),
             settings: restored.settings,
             selected: restored.selected,
             variants: restored.variants,

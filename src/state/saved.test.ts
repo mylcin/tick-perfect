@@ -22,6 +22,7 @@ const DEFAULTS: SavedState = {
   engravings: {},
   dailies: {},
   history: {},
+  ghosts: { best: {}, daily: null },
   tips: [],
 };
 
@@ -62,6 +63,16 @@ describe('restoreSaved', () => {
           [1_790_000_000_000, 0, 31, 33, 12, -2.5, 14.1],
           [1_790_000_100_000, 1, 23, 25, 9, 1, 11],
         ],
+      },
+      ghosts: {
+        best: { diver: { seed: 42, score: 31, taps: [612.5, 1404, 2210.25] } },
+        daily: {
+          seed: 7,
+          score: 23,
+          taps: [700],
+          number: 42,
+          watch: 'chronograph',
+        },
       },
       tips: ['perfect', 'persist'],
     };

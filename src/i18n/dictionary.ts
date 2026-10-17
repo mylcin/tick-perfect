@@ -161,6 +161,22 @@ export interface Dictionary {
     readonly menu: string;
   };
 
+  /** A ghost: a best round raced again, its hand see-through on the dial. */
+  readonly ghost: {
+    /** The title's button: the watch's best round, again. */
+    readonly open: string;
+    /** The results' heading of a race against the best. */
+    readonly title: string;
+    /** In the corner: the ghost's score now, and the gap to it. */
+    readonly hud: (score: number) => string;
+    readonly gap: (gap: number) => string;
+    /** The results: how the round went against the ghost's. */
+    readonly against: string;
+    readonly you: string;
+    readonly them: string;
+    readonly verdict: (gap: number) => string;
+  };
+
   /** A friend's challenge link: their round, to beat. */
   readonly challenge: {
     readonly title: string;

@@ -23,6 +23,15 @@ export type RoundMode =
       /** A set of targets on the watch on show, missed ones moved past. */
       readonly kind: 'practice';
       readonly pace: PracticePace;
+    }
+  | {
+      /**
+       * The best round on the watch on show, played again on its seed
+       * against its ghost; a learnt sequence, so it counts for nothing.
+       */
+      readonly kind: 'ghost';
+      readonly seed: number;
+      readonly toBeat: number;
     };
 
 export const COLLECTION_MODE: RoundMode = { kind: 'collection' };
@@ -37,6 +46,8 @@ export function fixedSeed(mode: RoundMode): number | null {
       return dailySeed(mode.number);
     case 'challenge':
       return mode.challenge.seed;
+    case 'ghost':
+      return mode.seed;
   }
 }
 
@@ -45,6 +56,7 @@ export function modeWatch(mode: RoundMode): WatchId | null {
   switch (mode.kind) {
     case 'collection':
     case 'practice':
+    case 'ghost':
       return null;
     case 'daily':
       return dailyWatch(mode.number);
@@ -63,6 +75,8 @@ export function scoreToBeat(mode: RoundMode): number | null {
       return mode.toBeat ?? null;
     case 'challenge':
       return mode.challenge.score;
+    case 'ghost':
+      return mode.toBeat;
   }
 }
 

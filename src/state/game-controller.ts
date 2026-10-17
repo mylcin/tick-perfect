@@ -82,6 +82,13 @@ export interface GameController {
    * changed it, as a server needs it to replay the round.
    */
   readonly log: () => RoundLog | null;
+  /** Draws a raced ghost's hand with the round's (null: none). */
+  readonly setGhost: (ghost: GhostHand | null) => void;
+}
+
+/** Where a raced ghost's hand is, for the pose. */
+export interface GhostHand {
+  readonly angle: (now: number) => number | null;
 }
 
 interface ControllerOptions {
@@ -111,6 +118,7 @@ export function createGameController(
   const listeners = new Set<EventListener>();
   let round: { seed: number; start: number; actions: LoggedAction[] } | null =
     null;
+  let ghost: GhostHand | null = null;
 
   function dispatch(
     action: GameAction,
@@ -212,7 +220,12 @@ export function createGameController(
             seed: state.round.seed + state.round.hits,
           }
         : null;
-    return { ...base, hit, crack };
+    return {
+      ...base,
+      hit,
+      crack,
+      ghost: ghost && state.phase !== 'idle' ? ghost.angle(now) : null,
+    };
   }
 
   return {
@@ -228,5 +241,8 @@ export function createGameController(
       };
     },
     log: () => round && { ...round, actions: [...round.actions] },
+    setGhost(next) {
+      ghost = next;
+    },
   };
 }

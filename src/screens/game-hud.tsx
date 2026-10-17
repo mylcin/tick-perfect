@@ -21,6 +21,7 @@ export function GameHud({
   state,
   lastHit,
   lastTap,
+  ghostScore,
   rules,
   standing,
   twistHints,
@@ -35,6 +36,8 @@ export function GameHud({
   lastHit: LastHit | null;
   /** In practice, every target's outcome and timing, missed ones too. */
   lastTap: LastTap | null;
+  /** A raced ghost's score as it plays; null with no ghost. */
+  ghostScore: number | null;
   rules: GameRules;
   standing: Standing;
   /** Spell out each twist as it arrives (a watch still being learnt). */
@@ -98,20 +101,37 @@ export function GameHud({
         >
           <PauseIcon />
         </IconButton>
-        <p
-          data-testid="hud-best"
-          data-standing={standing.kind}
-          data-passed={passed}
-          className={`text-xs tracking-[0.3em] uppercase tabular-nums transition-colors duration-300 ${
-            passed ? 'text-accent' : 'text-ink-3'
-          }`}
-        >
-          {standing.kind === 'practice'
-            ? t.game.practice(target, standing.score)
-            : standing.kind === 'toBeat'
-              ? t.game.toBeat(standing.score)
-              : t.game[standing.kind](Math.max(standing.score, score))}
-        </p>
+        <div className="flex flex-col items-end gap-1">
+          <p
+            data-testid="hud-best"
+            data-standing={standing.kind}
+            data-passed={passed}
+            className={`text-xs tracking-[0.3em] uppercase tabular-nums transition-colors duration-300 ${
+              passed ? 'text-accent' : 'text-ink-3'
+            }`}
+          >
+            {standing.kind === 'practice'
+              ? t.game.practice(target, standing.score)
+              : standing.kind === 'toBeat'
+                ? t.game.toBeat(standing.score)
+                : t.game[standing.kind](Math.max(standing.score, score))}
+          </p>
+          {/* For the eye: screen readers hear the race in the results. */}
+          {ghostScore !== null && (
+            <p
+              data-testid="hud-ghost"
+              data-gap={score - ghostScore}
+              aria-hidden="true"
+              className="text-[0.65rem] tracking-[0.25em] text-ink-3 uppercase tabular-nums"
+            >
+              <span lang="en">{t.ghost.hud(ghostScore)}</span>
+              {' · '}
+              <span className={score > ghostScore ? 'text-accent' : ''}>
+                {t.ghost.gap(score - ghostScore)}
+              </span>
+            </p>
+          )}
+        </div>
       </div>
 
       <p className="sr-only" data-testid="hud-score">

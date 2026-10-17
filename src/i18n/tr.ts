@@ -130,6 +130,23 @@ export const tr: Dictionary = {
     menu: 'Ana menü',
   },
 
+  ghost: {
+    open: 'Rekoruna karşı',
+    title: 'Rekoruna karşı',
+    hud: score => `Ghost ${String(score)}`,
+    gap: gap =>
+      gap === 0 ? '±0' : gap > 0 ? `+${String(gap)}` : `−${String(-gap)}`,
+    against: 'Ghost’a karşı',
+    you: 'Sen',
+    them: 'Ghost',
+    verdict: gap =>
+      gap > 0
+        ? `Ghost’u ${String(gap)} puan farkla geçtin.`
+        : gap < 0
+          ? `Ghost ${String(-gap)} puan önde kaldı.`
+          : 'Ghost ile berabere.',
+  },
+
   challenge: {
     title: 'Meydan okuma',
     card: (watch, score) => `Meydan okuma · ${watch} · Hedef ${String(score)}`,

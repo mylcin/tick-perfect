@@ -186,7 +186,7 @@ would not help, since the key would ship in the page. What other players see
 | P1       | Round history and personal progress in the timegrapher                | M      | Done    |
 | P2       | Daily archive: recent days, bests and run of days                     | S      | Done    |
 | P2       | Open Dailies for new players                                          | S      | Done    |
-| P2       | Ghost replay                                                          | L      | Backlog |
+| P2       | Ghost replay                                                          | L      | Done    |
 | P2       | Practice lab                                                          | M      | Done    |
 | P2       | Result card image                                                     | M      | Backlog |
 | P2       | Sign-out asks whether to keep this device's progress                  | S      | Backlog |
@@ -222,6 +222,11 @@ would not help, since the key would ship in the page. What other players see
   event ends the round with no miss. Rounds without it play exactly as
   before (the golden masters are unchanged). `practiceRules` eases a
   watch's rules for the slow pace.
+- `src/state/ghost.ts`, `ghost-runner.ts`: ghosts. A new best (the
+  watch's, or the day's Daily) keeps its seed and its taps in played time;
+  `checkGhost` replays it before a race; the runner plays it beside the
+  round on the same clock, mirroring pauses. Its hand is the seconds
+  hand's geometry, see-through (`parts/ghost-hand.tsx`).
 - `src/screens/practice-dialog.tsx`, `game-hud.tsx`, `title-screen.tsx`:
   the Practice button, the set's count and each target's timing in the
   HUD, and the summary with the next set's pace.

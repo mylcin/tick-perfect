@@ -39,7 +39,22 @@ export type RoundOutcome =
       /** Against a challenge's score, when one led here. */
       readonly beat: BeatStatus | null;
     }
-  | { readonly kind: 'challenge'; readonly beat: BeatStatus };
+  | { readonly kind: 'challenge'; readonly beat: BeatStatus }
+  /** A race against the watch's best round, which counts for nothing. */
+  | { readonly kind: 'ghost'; readonly beat: BeatStatus };
+
+/** One side of a race: hits, Perfects and spread (null with too few). */
+interface RaceSide {
+  readonly hits: number;
+  readonly perfects: number;
+  readonly spread: number | null;
+}
+
+/** The round beside the ghost it raced. */
+export interface GhostComparison {
+  readonly ghost: RaceSide & { readonly score: number };
+  readonly you: RaceSide;
+}
 
 export interface RoundResult {
   readonly score: number;
@@ -53,6 +68,8 @@ export interface RoundResult {
   readonly engraved: readonly EngravingId[];
   /** What Share sends. */
   readonly share: string;
+  /** The ghost it raced, if any. */
+  readonly ghost: GhostComparison | null;
 }
 
 /**
@@ -140,6 +157,14 @@ function shownFor(t: Dictionary, result: RoundResult) {
           outcome.daily,
           outcome.beat
         ),
+        beat: outcome.beat,
+      };
+    case 'ghost':
+      return {
+        title: t.ghost.title,
+        second: { label: t.gameOver.toBeat, value: outcome.beat.toBeat },
+        isNewBest: false,
+        summary: `${t.announce.roundOver(score)} ${beatText(t, outcome.beat)}`,
         beat: outcome.beat,
       };
     case 'challenge':
@@ -456,7 +481,16 @@ function ResultPanel({
         </p>
       )}
 
-      <RankedLine t={t} countable={result.outcome.kind !== 'challenge'} />
+      {result.ghost && (
+        <GhostRace t={t} score={result.score} race={result.ghost} />
+      )}
+
+      <RankedLine
+        t={t}
+        countable={
+          result.outcome.kind !== 'challenge' && result.outcome.kind !== 'ghost'
+        }
+      />
 
       {daily && (
         <div className="mt-3 flex flex-col items-center gap-1 text-xs text-ink-3 short:mt-2 compact:mt-2">
@@ -572,6 +606,68 @@ function ResultPanel({
           className={`mt-1 w-full max-w-sm resize-none rounded-xl border border-ink/15 bg-surface/90 px-3 py-2 text-xs text-ink ${FOCUS}`}
         />
       )}
+    </div>
+  );
+}
+
+/**
+ * The round beside the ghost it raced: who came out ahead, then the score,
+ * hits, Perfects and spread of each, to see where it was won or lost.
+ */
+function GhostRace({
+  t,
+  score,
+  race,
+}: {
+  t: Dictionary;
+  score: number;
+  race: GhostComparison;
+}) {
+  const spread = (ms: number | null) =>
+    ms === null ? '–' : t.timegrapher.spreadValue(Math.round(ms));
+  const rows = [
+    [t.gameOver.score, String(score), String(race.ghost.score)],
+    [t.timegrapher.hits, String(race.you.hits), String(race.ghost.hits)],
+    [
+      t.timegrapher.perfect,
+      String(race.you.perfects),
+      String(race.ghost.perfects),
+    ],
+    [t.timegrapher.spread, spread(race.you.spread), spread(race.ghost.spread)],
+  ] as const;
+  return (
+    <div
+      data-testid="ghost-race"
+      className="mt-3 w-full max-w-xs text-xs text-ink-3 short:mt-2"
+    >
+      <p data-testid="ghost-verdict" className="text-center text-ink-2">
+        {t.ghost.verdict(score - race.ghost.score)}
+      </p>
+      <table className="mt-1.5 w-full tabular-nums short:hidden">
+        <caption className="sr-only">{t.ghost.against}</caption>
+        <thead>
+          <tr>
+            <td />
+            <th scope="col" className="text-right font-normal">
+              {t.ghost.you}
+            </th>
+            <th scope="col" lang="en" className="text-right font-normal">
+              {t.ghost.them}
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map(([label, you, ghost]) => (
+            <tr key={label}>
+              <th scope="row" className="text-left font-normal">
+                {label}
+              </th>
+              <td className="text-right text-ink">{you}</td>
+              <td className="text-right">{ghost}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }

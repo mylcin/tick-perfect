@@ -10,6 +10,7 @@ import { UNWOUND } from './reserve';
 import { SAVE_KEY } from './saved';
 import { NO_DAILIES } from './daily-archive';
 import { NO_ENGRAVINGS } from './engravings';
+import { NO_GHOSTS } from './ghost';
 import { NO_HISTORY } from './history';
 import { NO_TIMING } from './timegrapher';
 import { FIRST_WATCH } from '../watches/ids';
@@ -37,6 +38,7 @@ export const appStore = createAppStore(
     engravings: NO_ENGRAVINGS,
     dailies: NO_DAILIES,
     history: NO_HISTORY,
+    ghosts: NO_GHOSTS,
     tips: [],
   }
 );

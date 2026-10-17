@@ -12,6 +12,7 @@ const SAVE: CloudSave = {
   },
   variants: { diver: 'green' },
   daily: { number: 3, best: 9, marks: 'PG' },
+  dailies: { '2': 14, '3': 9 },
   reserve: UNWOUND,
   timing: {},
   engravings: { escapement: 3 },

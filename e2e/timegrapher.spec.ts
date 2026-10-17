@@ -1,5 +1,7 @@
 import { expect, test } from '@playwright/test';
 
+import { SAVE_KEY, SAVE_VERSION } from '../src/state/saved';
+import { todaysDaily } from '../src/state/daily';
 import {
   ALL_UNLOCKED,
   gameState,
@@ -57,6 +59,13 @@ test('draws every hit of a round and keeps it', async ({ page, isMobile }) => {
       new RegExp(`^Trace of the last ${String(count)} hits: `)
     );
     await expect(trace.getByTestId('timegrapher-dot')).toHaveCount(count);
+    // The round is the first of the latest: nothing yet to compare with.
+    const latest = panel.getByTestId('timegrapher-latest');
+    await expect(latest).toContainText('1 round so far');
+    await expect(
+      latest.locator('[data-testid="latest-readout"][data-readout="average"]')
+    ).toHaveText(/^\d+(\.\d)?$/);
+    await expect(latest.getByTestId('latest-change')).toHaveCount(0);
   };
   await checkPanel();
 
@@ -134,4 +143,66 @@ test.describe('in Turkish on a narrow phone', () => {
       button.y + button.height <= text.y;
     expect(apart).toBe(true);
   });
+});
+
+test('sums up the latest rounds against those before, and the Dailies', async ({
+  page,
+}) => {
+  // Twenty rounds on the Diver, the later ten better; a few Dailies.
+  const now = Date.now();
+  const lines = Array.from({ length: 20 }, (_, index) => {
+    const better = index >= 10;
+    return [
+      now - (20 - index) * 60_000,
+      0,
+      better ? 30 : 20,
+      20,
+      better ? 10 : 5,
+      better ? 2 : 6,
+      better ? 10 : 16,
+    ];
+  });
+  const today = todaysDaily(new Date());
+  await page.addInitScript(
+    ([key, saved]) => {
+      localStorage.setItem(key, saved);
+    },
+    [
+      SAVE_KEY,
+      JSON.stringify({
+        state: {
+          timing: { diver: record(20) },
+          history: { diver: lines },
+          dailies: {
+            [String(today)]: 21,
+            [String(today - 1)]: 15,
+            [String(today - 3)]: 9,
+          },
+        },
+        version: SAVE_VERSION,
+      }),
+    ] as const
+  );
+  await page.goto('/');
+  await page.getByTestId('timegrapher-open').click({ timeout: SCENE_TIMEOUT });
+  const panel = page.getByTestId('timegrapher-dialog');
+  const readout = (key: string) =>
+    panel.locator(`[data-testid="latest-readout"][data-readout="${key}"]`);
+  await expect(readout('average')).toHaveText(/^30\s*\+10\.0/);
+  await expect(readout('perfect')).toHaveText(/^50%\s*\+25 pt/);
+  await expect(readout('spread')).toHaveText(/^±10 ms\s*−6 ms/);
+  // Twenty-five asked for, twenty played: nothing before them to compare.
+  await panel.getByText('Last 25').click();
+  await expect(panel.getByTestId('timegrapher-latest')).toContainText(
+    '20 rounds so far'
+  );
+  await expect(panel.getByTestId('latest-change')).toHaveCount(0);
+
+  const archive = panel.getByTestId('daily-archive');
+  await expect(
+    archive.locator('[data-testid="daily-archive-day"][data-played="true"]')
+  ).toHaveCount(3);
+  await expect(archive).toContainText(
+    '2 days in a row · 3 of the last 14 played'
+  );
 });

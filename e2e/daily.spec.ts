@@ -136,32 +136,37 @@ const PROGRESS = {
   points: 400,
 };
 
-test('waits for the day’s watch to be unlocked before its Daily', async ({
+test('plays the Daily on its watch before the collection opens it', async ({
   page,
 }) => {
+  // A fresh save: only the Diver is open, and today's Daily is on the
+  // Chronograph.
   await pinDate(page, TODAY);
   await page.goto('/');
   const daily = page.getByTestId('daily-play');
-  await expect(daily).toHaveAttribute('data-locked', 'true', {
+  await expect(daily).toHaveAttribute('aria-disabled', 'false', {
     timeout: SCENE_TIMEOUT,
   });
-  await expect(daily).toHaveAttribute('aria-disabled', 'true');
   await expect(daily).toHaveAccessibleName(
-    /^Daily #2, Chronograph\. Unlock the Chronograph to play today’s Daily\./
+    'Daily #2, Chronograph. Power reserve 0 of 7 days.'
   );
-  await expect(page.getByTestId('daily-locked')).toHaveText(
-    'Unlock the Chronograph to play today’s Daily'
-  );
-  // It can't be clicked, as a disabled control: pressed, it says why.
-  await expect(page.getByRole('button', { name: 'Tap to Play' })).toBeVisible({
-    timeout: SCENE_TIMEOUT,
+  await daily.click();
+  // Left alone, the hand runs past the first marker and the round ends.
+  await waitForPhase(page, 'gameOver');
+  await expect(page.getByRole('dialog', { name: 'Daily #2' })).toBeVisible({
+    timeout: 15_000,
   });
-  await daily.focus();
-  await page.keyboard.press('Enter');
-  await expect(page.getByTestId('announcer-polite')).toContainText(
-    'Locked. To unlock: Score 15 on the Diver'
+
+  // It counts towards the Daily alone: the Chronograph stays locked.
+  const results = page.getByTestId('game-over-dialog');
+  await results.getByRole('button', { name: 'Main menu' }).click();
+  await expect(dailyButton(page)).toHaveAccessibleName(
+    /^Daily #2, Chronograph\. Today’s best 0\./
   );
-  expect((await gameState(page)).phase).toBe('idle');
+  expect(await savedProgress(page)).toMatchObject({ unlocked: ['diver'] });
+  await expect(
+    page.getByRole('radio', { name: /^Chronograph,/ })
+  ).toHaveAccessibleName(/Locked/);
 });
 
 test('waits for a challenge’s watch to be unlocked', async ({ page }) => {

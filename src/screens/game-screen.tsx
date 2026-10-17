@@ -39,6 +39,7 @@ import { bestScore } from '../state/progress';
 import { goalAfter, roundShareText } from '../state/results';
 import { sessionStore, useSession } from '../state/session';
 import { engravingOf } from '../state/engravings';
+import { lineFor, MODE_CODES } from '../state/history';
 import { roundStats } from '../state/timegrapher';
 import { newlyEarnedVariants } from '../state/variants';
 import { announce } from '../utils/announcer';
@@ -247,8 +248,21 @@ export function GameScreen({
           const { state: over, qualities, errors } = controller.snapshot();
           if (event.type === 'miss' && over.phase === 'gameOver') {
             const outcome = recordRound(mode, spec.id, event.score, qualities);
-            // Timing measures skill, not score: every mode counts it.
+            // Timing measures skill, not score: every mode counts it, and
+            // keeps a line for the round to compare later ones with.
             appStore.getState().recordTiming(spec.id, errors, qualities);
+            appStore
+              .getState()
+              .recordLine(
+                spec.id,
+                lineFor(
+                  Date.now(),
+                  MODE_CODES[mode.kind],
+                  event.score,
+                  errors,
+                  qualities
+                )
+              );
             // So do the engravings, with the score and timing saved.
             const engraved = appStore
               .getState()

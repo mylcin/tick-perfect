@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-import { SCENE_TIMEOUT } from './helpers';
+import { SCENE_TIMEOUT, seedProgress } from './helpers';
 
 test('changes settings and keeps them after a reload', async ({ page }) => {
   await page.goto('/');
@@ -119,4 +119,50 @@ test('closes with its button and returns focus', async ({ page }) => {
   await page.getByTestId('settings-close').click();
   await expect(page.getByRole('dialog', { name: 'Settings' })).toBeHidden();
   await expect(open).toBeFocused();
+});
+
+test('resets settings and erases progress, each on its own', async ({
+  page,
+}) => {
+  await seedProgress(page, {
+    best: { diver: 20 },
+    unlocked: ['diver', 'chronograph'],
+    points: 400,
+  });
+  await page.goto('/');
+  await page.getByTestId('settings-open').click();
+  const settings = page.getByTestId('settings-dialog');
+  const status = settings.getByTestId('reset-status');
+
+  const sound = settings.getByRole('switch', { name: 'Sound' });
+  await sound.click();
+  await expect(sound).toHaveAttribute('aria-checked', 'false');
+  await settings.getByRole('button', { name: 'Reset settings' }).click();
+  await expect(sound).toHaveAttribute('aria-checked', 'true');
+  await expect(status).toHaveAttribute('data-outcome', 'settings');
+
+  // Erasing asks first; keeping it changes nothing.
+  await settings.getByRole('button', { name: 'Erase progress' }).click();
+  const keep = settings.getByRole('button', { name: 'Keep it' });
+  await expect(keep).toBeFocused();
+  await keep.click();
+  await expect(
+    settings.getByRole('button', { name: 'Erase progress' })
+  ).toBeFocused();
+  await expect(page.getByRole('radio', { name: /^Chronograph,/ })).toHaveCount(
+    1
+  );
+
+  await settings.getByRole('button', { name: 'Erase progress' }).click();
+  await settings.getByRole('button', { name: 'Erase', exact: true }).click();
+  await expect(status).toHaveAttribute('data-outcome', 'progress');
+  await page.keyboard.press('Escape');
+
+  // Back to a fresh start, after a reload too: only the Diver is open.
+  await page.reload();
+  await expect(page.getByRole('button', { name: 'Tap to Play' })).toBeVisible({
+    timeout: SCENE_TIMEOUT,
+  });
+  const chronograph = page.getByRole('radio', { name: /^Chronograph,/ });
+  await expect(chronograph).toHaveAccessibleName(/Locked/);
 });

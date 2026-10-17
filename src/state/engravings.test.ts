@@ -137,6 +137,18 @@ describe('mergeEngravings', () => {
 });
 
 describe('restoreEngravings', () => {
+  it('keeps the engravings it knows ahead of any number of others', () => {
+    const junk = Object.fromEntries(
+      Array.from({ length: MAX_ENGRAVINGS }, (_, i) => [
+        `madeUp${String(i)}`,
+        1,
+      ])
+    );
+    const restored = restoreEngravings({ ...junk, 'beatError:diver': 4 });
+    expect(Object.keys(restored)).toHaveLength(MAX_ENGRAVINGS);
+    expect(restored['beatError:diver']).toBe(4);
+  });
+
   it('keeps every engraving that looks like one, known or not', () => {
     expect(
       restoreEngravings({

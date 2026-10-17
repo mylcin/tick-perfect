@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises';
 
 import { expect, test, type Page } from '@playwright/test';
 
+import { MAX_BACKUP_BYTES } from '../src/state/backup';
 import { SAVE_KEY } from '../src/state/saved';
 import {
   gameState,
@@ -184,6 +185,12 @@ test('backs progress up to a file and restores one, losing nothing', async ({
     buffer: Buffer.from('{"app": "tick-perfect"'),
   });
   await expect(status).toHaveAttribute('data-outcome', 'unreadable');
+  await restore.setInputFiles({
+    name: 'huge.json',
+    mimeType: 'application/json',
+    buffer: Buffer.alloc(MAX_BACKUP_BYTES + 1, ' '),
+  });
+  await expect(status).toHaveAttribute('data-outcome', 'tooLarge');
 
   // The best of both: the Diver's 20 stays, the Chronograph's 41 came in
   // and unlocked the GMT.

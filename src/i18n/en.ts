@@ -109,7 +109,6 @@ export const en: Dictionary = {
       `Next Daily in ${hours > 0 ? `${String(hours)} h ` : ''}${String(minutes)} min`,
     ready: number => `Daily #${String(number)} is ready`,
     intro: 'Same targets for everyone today · winds the power reserve',
-    locked: watch => `Unlock the ${watch} to play today’s Daily`,
   },
 
   challenge: {
@@ -315,8 +314,21 @@ export const en: Dictionary = {
       restored: 'Progress restored. Nothing you had was lost.',
       unchanged: 'Nothing new in this backup: you have it all already.',
       unreadable: 'That file couldn’t be read.',
+      tooLarge: 'That file is too large to be a backup.',
       foreign: 'That file isn’t a Tick Perfect backup.',
     },
+    reset: 'Start over',
+    resetHint: 'Settings and progress are reset separately.',
+    resetSettings: 'Reset settings',
+    settingsReset: 'Settings are back to their defaults.',
+    eraseProgress: 'Erase progress',
+    eraseConfirm:
+      'Erase every score, watch, Daily and achievement on this device? Back it up first if you may want it again.',
+    erase: 'Erase',
+    keepProgress: 'Keep it',
+    progressErased: 'Progress erased. This device starts as new.',
+    eraseSignedIn:
+      'Your progress is in your account too, so it would come back. Sign out first to erase it from this device.',
     privacy: 'Privacy notice',
   },
 
@@ -390,6 +402,26 @@ export const en: Dictionary = {
     early: 'early',
     trace: (count, rate, spread) =>
       `Trace of the last ${String(count)} ${count === 1 ? 'hit' : 'hits'}: ${rateText(rate)} on average, spread ±${String(spread)} ms.`,
+    latest: 'Latest rounds',
+    latestNote:
+      'On this watch, in every mode, against as many rounds before. Perfect is Perfects over hits; rate is the hits’ average error, late as +; spread is how widely they scatter around it.',
+    lastRounds: count => `Last ${String(count)}`,
+    roundsSoFar: count =>
+      `${String(count)} ${count === 1 ? 'round' : 'rounds'} so far`,
+    averageScore: 'Average',
+    averageScoreValue: score =>
+      new Intl.NumberFormat('en', { maximumFractionDigits: 1 }).format(score),
+    change: (change, count) =>
+      `${change} on the ${String(count)} rounds before`,
+    daily: 'Daily',
+    dailyRun: days =>
+      days === 1 ? '1 day in a row' : `${String(days)} days in a row`,
+    dailyPlayed: (played, days) =>
+      `${String(played)} of the last ${String(days)} played`,
+    dailyDay: (number, best) =>
+      best === null
+        ? `Daily #${String(number)}: not played`
+        : `Daily #${String(number)}: best ${String(best)}`,
   },
 
   announce: {

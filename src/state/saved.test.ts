@@ -2,7 +2,12 @@ import { describe, expect, it } from 'vitest';
 
 import { INITIAL_PROGRESS } from './progress';
 import { UNWOUND } from './reserve';
-import { MAX_UNKNOWN_WATCHES, restoreSaved, type SavedState } from './saved';
+import {
+  DAYS_AHEAD,
+  MAX_UNKNOWN_WATCHES,
+  restoreSaved,
+  type SavedState,
+} from './saved';
 import { defaultSettings } from './settings';
 import { NO_TIMING } from './timegrapher';
 
@@ -15,6 +20,8 @@ const DEFAULTS: SavedState = {
   reserve: UNWOUND,
   timing: NO_TIMING,
   engravings: {},
+  dailies: {},
+  history: {},
   tips: [],
 };
 
@@ -49,6 +56,13 @@ describe('restoreSaved', () => {
         },
       },
       engravings: { 'beatError:diver': 5, escapement: 9 },
+      dailies: { '41': 17, '42': 23 },
+      history: {
+        diver: [
+          [1_790_000_000_000, 0, 31, 33, 12, -2.5, 14.1],
+          [1_790_000_100_000, 1, 23, 25, 9, 1, 11],
+        ],
+      },
       tips: ['perfect', 'persist'],
     };
     expect(restoreSaved(JSON.parse(JSON.stringify(saved)), DEFAULTS)).toEqual(
@@ -378,6 +392,26 @@ describe('restoreSaved: the Daily and the power reserve', () => {
     });
     expect(restore({ reserve: { days: 0, woundOn: 0 } }).reserve).toEqual(
       UNWOUND
+    );
+  });
+
+  it('drops a Daily or a wind too far ahead of today, and keeps one near it', () => {
+    const ahead = (days: number) =>
+      restoreSaved(
+        {
+          daily: { ...daily, number: 10 + days },
+          reserve: { days: 3, woundOn: 10 + days },
+        },
+        DEFAULTS,
+        10
+      );
+    expect(ahead(DAYS_AHEAD).daily?.number).toBe(10 + DAYS_AHEAD);
+    expect(ahead(DAYS_AHEAD).reserve.woundOn).toBe(10 + DAYS_AHEAD);
+    expect(ahead(DAYS_AHEAD + 1).daily).toBeNull();
+    expect(ahead(DAYS_AHEAD + 1).reserve).toEqual(UNWOUND);
+    // Not knowing today, it can't tell: everything well-formed is kept.
+    expect(restore({ daily: { ...daily, number: 9999 } }).daily?.number).toBe(
+      9999
     );
   });
 });

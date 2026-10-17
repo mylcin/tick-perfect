@@ -38,6 +38,29 @@ uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   every caseback. Caseback on the title turns the watch over to show them,
   with what earns the rest; the results say when one is engraved. They
   follow the player to other devices and into backups.
+- **Latest rounds in the timegrapher.** Each watch's latest 10, 25 or 100
+  rounds summed up: average score, Perfect share, rate and spread, each
+  beside its change on as many rounds before. A line per round is kept on
+  the device, the latest 100 on each watch.
+- **Recent Dailies in the timegrapher.** The last fortnight a cell a day,
+  with that day's best, the run of days played and how many were. Each
+  Daily's best is kept for 60 days, and follows the player like the rest
+  of their progress.
+- **Start over** in Settings: reset the settings, or erase the progress on
+  this device after a confirmation (signed out, so an account can't bring
+  it straight back).
+
+### Fixed
+
+- A Daily or a power-reserve wind dated more than two days ahead (a clock
+  set ahead, or a made-up backup) is no longer kept, so it can't stop
+  every Daily until then from counting.
+- A watch earned only by two devices' progress together now opens as soon
+  as they merge.
+- Engravings this version knows are kept ahead of any others when a save
+  is over the cap.
+- A backup too large to read says so, instead of calling it not a backup.
+- A ranked round sent twice at once is taken in once.
 
 ### Changed
 
@@ -58,8 +81,10 @@ uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   Carbon, Navy Rose Gold. A
   variant may now change the case's metal and accents, the hands' metal
   and the strap, never the case's or a hand's shape.
-- A Daily, or a challenge, can be played only once the collection has
-  unlocked its watch: until then its button says which watch to unlock.
+- Every player can play every Daily, on a watch the collection hasn't
+  opened yet too: the round counts towards the Daily alone, and the watch
+  stays locked. A challenge can be played only once the collection has
+  unlocked its watch: until then its card says which watch to unlock.
 - The Grand Complication's travel-time hand is a fine stem with a small
   openwork arrowhead, its barbs swept back, on a finer dark edge.
 

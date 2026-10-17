@@ -1,4 +1,4 @@
-import { useId, useState, type ChangeEvent } from 'react';
+import { useEffect, useId, useRef, useState, type ChangeEvent } from 'react';
 
 import { Button, FOCUS, FOCUS_WITHIN, IconButton } from '../components/buttons';
 import { CloseIcon } from '../components/icons';
@@ -8,7 +8,7 @@ import { canVibrate } from '../feedback/haptics';
 import { usePrefersReducedMotion } from '../hooks/use-prefers-reduced-motion';
 import { DICTIONARIES, LANGUAGES, type Dictionary } from '../i18n';
 import { useT } from '../i18n/use-t';
-import { online } from '../online';
+import { online, useOnline } from '../online';
 import { appStore, useAppState } from '../state/app';
 import { cloudSaveOf } from '../state/app-store';
 import {
@@ -22,7 +22,8 @@ import { THEME_SETTINGS } from '../state/settings';
 
 /**
  * Sound, vibration, appearance, night mode, motion and language, saved as
- * they change; then backing progress up to a file and restoring it.
+ * they change; then backing progress up to a file and restoring it, and
+ * starting over.
  */
 export function SettingsDialog() {
   const t = useT();
@@ -138,6 +139,7 @@ export function SettingsDialog() {
             }}
           />
           <ProgressBackup t={t} />
+          <StartOver t={t} />
         </div>
 
         <p className="mt-auto pt-6 text-xs">
@@ -202,7 +204,7 @@ function ProgressBackup({ t }: { t: Dictionary }) {
     input.value = '';
     if (!file) return;
     if (file.size > MAX_BACKUP_BYTES) {
-      report('foreign');
+      report('tooLarge');
       return;
     }
     let text: string;
@@ -264,6 +266,114 @@ function ProgressBackup({ t }: { t: Dictionary }) {
         {outcome && t.settings.restoreOutcomes[outcome.kind]}
         {/* A repeated message must change to be announced again. */}
         {outcome && outcome.count % 2 === 0 ? ' ' : ''}
+      </p>
+    </div>
+  );
+}
+
+/**
+ * Settings and progress reset on their own. Erasing asks first, and waits
+ * while signed in: the account's copy would only sync straight back.
+ */
+function StartOver({ t }: { t: Dictionary }) {
+  const id = useId();
+  const resetSettings = useAppState(state => state.resetSettings);
+  const eraseProgress = useAppState(state => state.eraseProgress);
+  const signedIn = useOnline(state => state.status === 'signedIn');
+  const [confirming, setConfirming] = useState(false);
+  const [done, setDone] = useState<'settings' | 'progress' | null>(null);
+  // The button pressed goes as the question comes and back as it goes, so
+  // focus moves with them: to the safe answer, then back to the button.
+  const keep = useRef<HTMLButtonElement>(null);
+  const erase = useRef<HTMLButtonElement>(null);
+  const asked = useRef(false);
+  useEffect(() => {
+    if (confirming) keep.current?.focus();
+    else if (asked.current) erase.current?.focus();
+    asked.current = confirming;
+  }, [confirming]);
+
+  return (
+    <div
+      role="group"
+      aria-labelledby={`${id}-label`}
+      aria-describedby={`${id}-hint`}
+      className="py-3.5 short:py-2"
+    >
+      <p id={`${id}-label`} className="text-[0.95rem] text-ink">
+        {t.settings.reset}
+      </p>
+      <p id={`${id}-hint`} className="mt-0.5 text-xs text-ink-3 short:sr-only">
+        {t.settings.resetHint}
+      </p>
+      {confirming ? (
+        <div className="mt-3 short:mt-2">
+          <p id={`${id}-confirm`} className="text-xs text-ink-2">
+            {t.settings.eraseConfirm}
+          </p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            <Button
+              className="min-h-11! px-4!"
+              aria-describedby={`${id}-confirm`}
+              onClick={() => {
+                eraseProgress();
+                setConfirming(false);
+                setDone('progress');
+              }}
+            >
+              {t.settings.erase}
+            </Button>
+            <Button
+              ref={keep}
+              variant="quiet"
+              className="min-h-11! px-4!"
+              onClick={() => {
+                setConfirming(false);
+              }}
+            >
+              {t.settings.keepProgress}
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <div className="mt-3 flex flex-wrap gap-2 short:mt-2">
+          <Button
+            className="min-h-11! px-4!"
+            onClick={() => {
+              resetSettings();
+              setDone('settings');
+            }}
+          >
+            {t.settings.resetSettings}
+          </Button>
+          <Button
+            ref={erase}
+            className="min-h-11! px-4! aria-disabled:cursor-not-allowed!"
+            aria-disabled={signedIn}
+            aria-describedby={signedIn ? `${id}-signed-in` : undefined}
+            onClick={() => {
+              if (signedIn) return;
+              setDone(null);
+              setConfirming(true);
+            }}
+          >
+            {t.settings.eraseProgress}
+          </Button>
+        </div>
+      )}
+      {signedIn && (
+        <p id={`${id}-signed-in`} className="mt-2 text-xs text-ink-3">
+          {t.settings.eraseSignedIn}
+        </p>
+      )}
+      <p
+        role="status"
+        data-testid="reset-status"
+        {...(done && { 'data-outcome': done })}
+        className={`text-xs text-ink-2 ${done ? 'mt-2' : ''}`}
+      >
+        {done === 'settings' && t.settings.settingsReset}
+        {done === 'progress' && t.settings.progressErased}
       </p>
     </div>
   );

@@ -3,9 +3,17 @@ import { useState, type ReactNode } from 'react';
 import { FOCUS_WITHIN, IconButton } from '../components/buttons';
 import { CloseIcon } from '../components/icons';
 import { Modal } from '../components/modal';
+import { useToday } from '../hooks/use-today';
 import type { Dictionary } from '../i18n';
 import { useT } from '../i18n/use-t';
 import { useAppState } from '../state/app';
+import { runOfDays } from '../state/daily-archive';
+import {
+  latestRounds,
+  summarize,
+  type RoundLine,
+  type Summary,
+} from '../state/history';
 import { useSession } from '../state/session';
 import {
   perfectShare,
@@ -42,7 +50,8 @@ const yOf = (ms: number) =>
  * The player's timing on each watch they have played, the way a
  * timegrapher shows a movement's: a trace of the latest hits' errors, late
  * above the zero and early below, with the rate, the spread and the
- * Perfect share underneath. Opened from the title, under Settings.
+ * Perfect share underneath; then the latest rounds against those before,
+ * and the recent Dailies. Opened from the title, under Settings.
  */
 export function TimegrapherDialog() {
   const t = useT();
@@ -81,6 +90,7 @@ export function TimegrapherDialog() {
           </IconButton>
         </div>
         <Readings t={t} />
+        <DailyArchive t={t} />
       </div>
     </Modal>
   );
@@ -89,6 +99,7 @@ export function TimegrapherDialog() {
 /** Mounted afresh each time the panel opens, on the watch on show. */
 function Readings({ t }: { t: Dictionary }) {
   const timing = useAppState(state => state.timing);
+  const history = useAppState(state => state.history);
   const shown = useSession(state => state.watch);
   const watches = WATCH_ORDER.filter(id => (timing[id]?.count ?? 0) > 0);
   const [picked, setPicked] = useState<WatchId | undefined>(() =>
@@ -183,7 +194,218 @@ function Readings({ t }: { t: Dictionary }) {
           </div>
         ))}
       </dl>
+
+      {/* Remounted per watch, so each starts on its latest few rounds. */}
+      <LatestRounds key={picked} t={t} lines={history[picked] ?? []} />
     </>
+  );
+}
+
+/** How many of the latest rounds can be summed up. */
+const WINDOWS = [10, 25, 100] as const;
+
+const signed = (value: number, digits: number) => {
+  const rounded = Number(value.toFixed(digits));
+  if (rounded === 0) return '±0';
+  return `${rounded > 0 ? '+' : '−'}${Math.abs(rounded).toFixed(digits)}`;
+};
+
+/**
+ * The latest rounds on a watch, summed up, each figure beside its change on
+ * as many rounds before (once there are that many). The note says how each
+ * is worked out: nothing here is a score of skill beyond what it says.
+ */
+function LatestRounds({
+  t,
+  lines,
+}: {
+  t: Dictionary;
+  lines: readonly RoundLine[];
+}) {
+  const [count, setCount] = useState<(typeof WINDOWS)[number]>(WINDOWS[0]);
+  const { latest, before } = latestRounds(lines, count);
+  const now = summarize(latest);
+  if (!now) return null;
+  const then = before && summarize(before);
+
+  const change = (
+    of: (summary: Summary) => number | null,
+    show: (difference: number) => string
+  ) => {
+    const a = of(now);
+    const b = then ? of(then) : null;
+    return a === null || b === null ? null : show(a - b);
+  };
+  const readouts = [
+    [
+      'average',
+      t.timegrapher.averageScore,
+      t.timegrapher.averageScoreValue(now.averageScore),
+      change(
+        summary => summary.averageScore,
+        difference => signed(difference, 1)
+      ),
+    ],
+    [
+      'perfect',
+      t.timegrapher.perfect,
+      now.perfectShare === null
+        ? '–'
+        : t.timegrapher.perfectValue(now.perfectShare),
+      change(
+        summary => summary.perfectShare,
+        difference => `${signed(difference * 100, 0)} pt`
+      ),
+    ],
+    [
+      'rate',
+      t.timegrapher.rate,
+      now.rate === null ? '–' : t.timegrapher.rateValue(wholeRate(now.rate)),
+      null,
+    ],
+    [
+      'spread',
+      t.timegrapher.spread,
+      now.spread === null
+        ? '–'
+        : t.timegrapher.spreadValue(Math.round(now.spread)),
+      change(
+        summary => summary.spread,
+        difference => `${signed(difference, 0)} ms`
+      ),
+    ],
+  ] as const;
+
+  return (
+    <section
+      aria-labelledby="timegrapher-latest"
+      data-testid="timegrapher-latest"
+      className="mt-6 border-t border-ink/10 pt-4 short:mt-4"
+    >
+      <h3
+        id="timegrapher-latest"
+        className="text-[0.65rem] tracking-[0.3em] text-ink-3 uppercase"
+      >
+        {t.timegrapher.latest}
+      </h3>
+      <fieldset className="mt-2">
+        <legend className="sr-only">{t.timegrapher.latest}</legend>
+        <div className="flex flex-wrap gap-1.5">
+          {WINDOWS.map(option => (
+            <label
+              key={option}
+              className={`relative cursor-pointer rounded-full border border-ink/10 px-3 py-1 text-xs tracking-[0.08em] text-ink-3 tabular-nums transition-colors hover:text-ink has-checked:border-transparent has-checked:bg-ink has-checked:text-surface ${FOCUS_WITHIN}`}
+            >
+              <input
+                type="radio"
+                name="timegrapher-latest"
+                value={option}
+                checked={count === option}
+                onChange={() => {
+                  setCount(option);
+                }}
+                className="sr-only"
+              />
+              {t.timegrapher.lastRounds(option)}
+            </label>
+          ))}
+        </div>
+      </fieldset>
+      {latest.length < count && (
+        <p className="mt-2 text-xs text-ink-3">
+          {t.timegrapher.roundsSoFar(latest.length)}
+        </p>
+      )}
+      <dl className="mt-3 grid grid-cols-2 gap-x-6 gap-y-3 short:grid-cols-4 short:gap-x-3">
+        {readouts.map(([key, label, value, difference]) => (
+          <div key={key}>
+            <dt className="text-[0.65rem] tracking-[0.3em] text-ink-3 uppercase short:tracking-[0.15em]">
+              {label}
+            </dt>
+            <dd
+              data-testid="latest-readout"
+              data-readout={key}
+              className="mt-0.5 text-lg font-light text-ink tabular-nums short:text-base"
+            >
+              {value}
+              {difference !== null && (
+                <span
+                  data-testid="latest-change"
+                  className="ml-1.5 text-xs text-ink-3"
+                >
+                  <span aria-hidden="true">{difference}</span>
+                  <span className="sr-only">
+                    {t.timegrapher.change(difference, count)}
+                  </span>
+                </span>
+              )}
+            </dd>
+          </div>
+        ))}
+      </dl>
+      <p className="mt-3 text-[0.7rem] leading-relaxed text-ink-3 short:hidden">
+        {t.timegrapher.latestNote}
+      </p>
+    </section>
+  );
+}
+
+/** How many days the Daily strip looks back, today included. */
+const DAYS_SHOWN = 14;
+
+/**
+ * The last fortnight of Dailies, a cell a day with its best, the run of
+ * days played and how many were. Nothing shows before the first Daily.
+ */
+function DailyArchive({ t }: { t: Dictionary }) {
+  const dailies = useAppState(state => state.dailies);
+  const today = useToday();
+  if (Object.keys(dailies).length === 0) return null;
+  const days = Array.from(
+    { length: DAYS_SHOWN },
+    (_, index) => today - DAYS_SHOWN + 1 + index
+  ).filter(day => day >= 1);
+  const bestOn = (day: number) => dailies[String(day)] ?? null;
+  const played = days.filter(day => bestOn(day) !== null).length;
+
+  return (
+    <section
+      aria-labelledby="timegrapher-daily"
+      data-testid="daily-archive"
+      className="mt-6 border-t border-ink/10 pt-4 short:mt-4"
+    >
+      <h3
+        id="timegrapher-daily"
+        lang="en"
+        className="text-[0.65rem] tracking-[0.3em] text-ink-3 uppercase"
+      >
+        {t.timegrapher.daily}
+      </h3>
+      <ol className="mt-3 grid grid-cols-7 gap-1.5">
+        {days.map(day => {
+          const best = bestOn(day);
+          return (
+            <li
+              key={day}
+              data-testid="daily-archive-day"
+              data-played={best !== null}
+              aria-label={t.timegrapher.dailyDay(day, best)}
+              className={`flex aspect-square items-center justify-center rounded-md text-xs tabular-nums ${
+                best === null
+                  ? 'border border-dashed border-ink/10 text-ink-4'
+                  : 'bg-accent/20 text-ink'
+              } ${day === today ? 'ring-1 ring-ink/40' : ''}`}
+            >
+              {best ?? ''}
+            </li>
+          );
+        })}
+      </ol>
+      <p className="mt-3 text-xs text-ink-2">
+        {t.timegrapher.dailyRun(runOfDays(dailies, today))} ·{' '}
+        {t.timegrapher.dailyPlayed(played, days.length)}
+      </p>
+    </section>
   );
 }
 

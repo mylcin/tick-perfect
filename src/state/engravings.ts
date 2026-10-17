@@ -174,21 +174,27 @@ const KEY = /^[a-z][A-Za-z0-9]{0,31}(:[a-z][A-Za-z0-9]{0,31})?$/;
 /** Plenty for every engraving on every watch a newer version adds. */
 export const MAX_ENGRAVINGS = 200;
 
-/** Saved engravings, read back: any key that looks like one, on a real day. */
+/**
+ * Saved engravings, read back: any key that looks like one, on a real day,
+ * up to MAX_ENGRAVINGS. Those this version knows come first, so keys it
+ * doesn't (a newer version's, or junk) can never push them out.
+ */
 export function restoreEngravings(saved: unknown): Engravings {
   if (typeof saved !== 'object' || saved === null || Array.isArray(saved)) {
     return NO_ENGRAVINGS;
   }
-  const restored: Record<string, number> = {};
-  for (const [key, day] of Object.entries(saved).slice(0, MAX_ENGRAVINGS)) {
-    if (
-      KEY.test(key) &&
-      typeof day === 'number' &&
-      Number.isSafeInteger(day) &&
-      day >= 1
-    ) {
-      restored[key] = day;
+  const valid = Object.entries(saved).filter(
+    (entry): entry is [string, number] => {
+      const [key, day] = entry as [string, unknown];
+      return (
+        KEY.test(key) &&
+        typeof day === 'number' &&
+        Number.isSafeInteger(day) &&
+        day >= 1
+      );
     }
-  }
-  return restored;
+  );
+  const known = valid.filter(([key]) => engravingOf(key) !== null);
+  const unknown = valid.filter(([key]) => engravingOf(key) === null);
+  return Object.fromEntries([...known, ...unknown].slice(0, MAX_ENGRAVINGS));
 }

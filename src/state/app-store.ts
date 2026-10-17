@@ -24,8 +24,11 @@ import {
   isUnlocked,
   mergeProgress,
   recordScore,
+  withEarnedUnlocks,
   type ScoreRecord,
 } from './progress';
+import { mergeDailies, recordDailyBest } from './daily-archive';
+import { addLine, mergeHistory, type RoundLine } from './history';
 import { mergeReserve } from './reserve';
 import { restoreSaved, SAVE_KEY, SAVE_VERSION, type SavedState } from './saved';
 import type { Settings } from './settings';
@@ -55,6 +58,8 @@ export interface AppState extends SavedState {
     errors: readonly number[],
     qualities: readonly HitQuality[]
   ) => void;
+  /** Adds a finished round's line to `watch`'s history, in any mode. */
+  readonly recordLine: (watch: WatchId, line: RoundLine) => void;
   /**
    * Engraves what a finished round on `watch` earned (null: what the
    * collection alone has), once its score and timing are saved. Returns
@@ -76,36 +81,53 @@ export interface AppState extends SavedState {
    * one has none. Nothing earned here is ever lost.
    */
   readonly mergeSaved: (saved: unknown) => void;
+  /** Puts every setting back to its default; progress stays. */
+  readonly resetSettings: () => void;
+  /**
+   * Erases everything earned on this device (settings and tips stay), so
+   * it starts as new. Written over rather than merged, which every other
+   * save is, so the stored progress doesn't come straight back.
+   */
+  readonly eraseProgress: () => void;
 }
 
 /** What follows a player to another device: all they earned, not settings. */
 export type CloudSave = Pick<
   SavedState,
-  'progress' | 'variants' | 'daily' | 'reserve' | 'timing' | 'engravings'
+  | 'progress'
+  | 'variants'
+  | 'daily'
+  | 'dailies'
+  | 'reserve'
+  | 'timing'
+  | 'engravings'
 >;
 
 export function cloudSaveOf(state: SavedState): CloudSave {
-  const { progress, variants, daily, reserve, timing, engravings } = state;
-  return { progress, variants, daily, reserve, timing, engravings };
+  const { progress, variants, daily, dailies, reserve, timing, engravings } =
+    state;
+  return { progress, variants, daily, dailies, reserve, timing, engravings };
 }
 
 /** Added to the save's key for a copy of a save that couldn't be read. */
 export const UNREADABLE = '.unreadable';
 
 /**
- * Everything earned in both: bests, unlocks, the Daily, the reserve, the
- * timing records and the engravings.
+ * Everything earned in both: bests, unlocks, the Daily and the days before
+ * it, the reserve, the timing records and the engravings. A watch the two
+ * earn only together (one side's best, the other's points) opens as well.
  */
 function mergeEarned(
   a: SavedState,
   b: SavedState
 ): Pick<
   SavedState,
-  'progress' | 'daily' | 'reserve' | 'timing' | 'engravings'
+  'progress' | 'daily' | 'dailies' | 'reserve' | 'timing' | 'engravings'
 > {
   return {
-    progress: mergeProgress(a.progress, b.progress),
+    progress: withEarnedUnlocks(mergeProgress(a.progress, b.progress)),
     daily: mergeDaily(a.daily, b.daily),
+    dailies: mergeDailies(a.dailies, b.dailies),
     reserve: mergeReserve(a.reserve, b.reserve),
     timing: mergeTiming(a.timing, b.timing),
     engravings: mergeEngravings(a.engravings, b.engravings),
@@ -124,7 +146,8 @@ function mergeEarned(
  */
 function progressKeepingStorage(
   storage: SyncStorage,
-  defaults: SavedState
+  defaults: SavedState,
+  today: () => number
 ): PersistStorage<SavedState> {
   const read = (name: string): StorageValue<SavedState> | null => {
     const raw = storage.getItem(name);
@@ -150,12 +173,14 @@ function progressKeepingStorage(
     },
     setItem: (name, value) => {
       const stored = read(name);
-      const restored = stored && restoreSaved(stored.state, defaults);
-      // Tips, too: one another tab just showed isn't shown again.
+      const restored = stored && restoreSaved(stored.state, defaults, today());
+      // Tips and history, too: one another tab just showed isn't shown
+      // again, and a round it just finished stays in the history.
       const earned = restored
         ? {
             ...mergeEarned(value.state, restored),
             tips: mergeTips(value.state.tips, restored.tips),
+            history: mergeHistory(value.state.history, restored.history),
           }
         : {};
       storage.setItem(
@@ -173,11 +198,18 @@ function progressKeepingStorage(
   };
 }
 
-/** Settings and progress, saved to `storage` after every change. */
-export function createAppStore(storage: SyncStorage, defaults: SavedState) {
+/**
+ * Settings and progress, saved to `storage` after every change. `today` is
+ * the Daily number now, for keeping days from the future out.
+ */
+export function createAppStore(
+  storage: SyncStorage,
+  defaults: SavedState,
+  today: () => number = () => todaysDaily(new Date())
+) {
   return createStore<AppState>()(
     persist(
-      (set, get) => ({
+      (set, get, api) => ({
         ...defaults,
         updateSettings: patch => {
           set(state => ({ settings: { ...state.settings, ...patch } }));
@@ -194,13 +226,21 @@ export function createAppStore(storage: SyncStorage, defaults: SavedState) {
             score,
             qualities
           );
-          set(progress);
+          set({
+            ...progress,
+            ...(outcome.counted && {
+              dailies: recordDailyBest(get().dailies, number, score),
+            }),
+          });
           return outcome;
         },
         recordTiming: (watch, errors, qualities) => {
           set(state => ({
             timing: addRound(state.timing, watch, errors, qualities),
           }));
+        },
+        recordLine: (watch, line) => {
+          set(state => ({ history: addLine(state.history, watch, line) }));
         },
         engrave: (watch, round) => {
           const state = get();
@@ -232,17 +272,34 @@ export function createAppStore(storage: SyncStorage, defaults: SavedState) {
         },
         mergeSaved: saved => {
           const current = get();
-          const restored = restoreSaved(saved, current);
+          const restored = restoreSaved(saved, current, today());
           set({
             ...mergeEarned(current, restored),
             variants: { ...restored.variants, ...current.variants },
+          });
+        },
+        resetSettings: () => {
+          set({ settings: defaults.settings });
+        },
+        eraseProgress: () => {
+          api.persist.clearStorage();
+          set({
+            progress: defaults.progress,
+            selected: defaults.selected,
+            variants: defaults.variants,
+            daily: defaults.daily,
+            reserve: defaults.reserve,
+            timing: defaults.timing,
+            engravings: defaults.engravings,
+            dailies: defaults.dailies,
+            history: defaults.history,
           });
         },
       }),
       {
         name: SAVE_KEY,
         version: SAVE_VERSION,
-        storage: progressKeepingStorage(storage, defaults),
+        storage: progressKeepingStorage(storage, defaults, today),
         partialize: ({
           settings,
           progress,
@@ -252,6 +309,8 @@ export function createAppStore(storage: SyncStorage, defaults: SavedState) {
           reserve,
           timing,
           engravings,
+          dailies,
+          history,
           tips,
         }): SavedState => ({
           settings,
@@ -262,19 +321,22 @@ export function createAppStore(storage: SyncStorage, defaults: SavedState) {
           reserve,
           timing,
           engravings,
+          dailies,
+          history,
           tips,
         }),
         // Older versions are read field by field like any other saved data.
-        migrate: saved => restoreSaved(saved, defaults),
+        migrate: saved => restoreSaved(saved, defaults, today()),
         // Settings and the picks follow the latest save; everything earned
         // keeps the best of both, so a second tab rehydrating can't wipe it,
         // and a tip shown in either stays shown.
         merge: (saved, current) => {
-          const restored = restoreSaved(saved, defaults);
+          const restored = restoreSaved(saved, defaults, today());
           return {
             ...current,
             ...mergeEarned(current, restored),
             tips: mergeTips(current.tips, restored.tips),
+            history: mergeHistory(current.history, restored.history),
             settings: restored.settings,
             selected: restored.selected,
             variants: restored.variants,

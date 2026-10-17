@@ -9,7 +9,6 @@ import {
   CasebackIcon,
   CloseIcon,
   HelpIcon,
-  LockIcon,
   LeaderboardIcon,
   SettingsIcon,
   TimegrapherIcon,
@@ -141,10 +140,8 @@ export function TitleScreen() {
   const todaysBest = daily?.number === today ? daily.best : null;
   const reserveDays = reserveOn(reserve, today);
   const dailyName = WATCHES[dailyWatch(today)].name;
-  const dailyLocked = !isUnlocked(progress, dailyWatch(today));
   const dailyLabel = [
     t.daily.button(today, dailyName),
-    dailyLocked ? `${t.daily.locked(dailyName)}.` : '',
     todaysBest === null ? '' : t.daily.todaysBest(todaysBest),
     t.daily.reserveOf(reserveDays, RESERVE_DAYS),
   ]
@@ -179,12 +176,13 @@ export function TitleScreen() {
   }, [ready, locked, t, select, watch, play]);
 
   /**
-   * A Daily or a challenge, on its own watch: only once the collection has
-   * opened it, like any other round on it.
+   * A Daily or a challenge, on its own watch. Everyone plays the Daily,
+   * on a watch the collection hasn't opened too (its rounds count towards
+   * the Daily alone); a challenge waits until the watch is open.
    */
   const startMode = (mode: RoundMode) => {
     if (!ready) return;
-    const modeOn = modeWatch(mode);
+    const modeOn = mode.kind === 'challenge' ? modeWatch(mode) : null;
     if (modeOn && !isUnlocked(progress, modeOn)) {
       announce(t.announce.locked(lockedText(t, modeOn, progress)));
       return;
@@ -538,22 +536,13 @@ export function TitleScreen() {
         {!failed && (
           <div className="flex flex-col items-center gap-1">
             <Button
-              aria-disabled={!ready || dailyLocked}
+              aria-disabled={!ready}
               data-testid="daily-play"
-              data-locked={dailyLocked}
-              className="min-h-11! gap-2.5! px-4! text-[0.7rem]! tracking-[0.12em]! uppercase aria-disabled:cursor-not-allowed!"
+              className="min-h-11! gap-2.5! px-4! text-[0.7rem]! tracking-[0.12em]! uppercase"
               onClick={() => {
                 startMode({ kind: 'daily', number: today });
               }}
             >
-              {dailyLocked && (
-                <span
-                  aria-hidden="true"
-                  className="text-ink-3 [&_svg]:size-3.5"
-                >
-                  <LockIcon />
-                </span>
-              )}
               {/* Heard as one sentence; the parts beside it are for the eye. */}
               <span className="sr-only">
                 <WithEnglishNames>{dailyLabel}</WithEnglishNames>
@@ -572,23 +561,13 @@ export function TitleScreen() {
               )}
               <ReserveGauge days={reserveDays} />
             </Button>
-            {dailyLocked ? (
+            {daily === null && (
               <p
-                data-testid="daily-locked"
-                aria-hidden="true"
+                data-testid="daily-intro"
                 className="text-center text-[0.7rem] text-ink-3 short:hidden compact:hidden"
               >
-                <WithEnglishNames>{t.daily.locked(dailyName)}</WithEnglishNames>
+                {t.daily.intro}
               </p>
-            ) : (
-              daily === null && (
-                <p
-                  data-testid="daily-intro"
-                  className="text-center text-[0.7rem] text-ink-3 short:hidden compact:hidden"
-                >
-                  {t.daily.intro}
-                </p>
-              )
             )}
           </div>
         )}

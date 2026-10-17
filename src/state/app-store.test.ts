@@ -18,6 +18,8 @@ const DEFAULTS: SavedState = {
   reserve: UNWOUND,
   timing: NO_TIMING,
   engravings: {},
+  dailies: {},
+  history: {},
   tips: [],
 };
 
@@ -48,6 +50,8 @@ describe('createAppStore', () => {
         reserve: UNWOUND,
         timing: NO_TIMING,
         engravings: {},
+        dailies: {},
+        history: {},
         tips: [],
       },
       version: SAVE_VERSION,
@@ -367,6 +371,116 @@ describe('createAppStore', () => {
     // Another device's progress leaves this one's tips alone.
     store.getState().mergeSaved({ tips: [], progress: { best: { diver: 3 } } });
     expect(store.getState().tips).toEqual(['perfect']);
+  });
+
+  it('reads a save from before versions were numbered, and saves it as current', () => {
+    const storage = memoryStorage();
+    storage.setItem(
+      SAVE_KEY,
+      JSON.stringify({
+        state: {
+          progress: { best: { diver: 20 }, unlocked: ['diver'], points: 400 },
+          settings: { sound: false, theme: 'neon' },
+        },
+        version: 0,
+      })
+    );
+    const store = createAppStore(storage, DEFAULTS);
+    const { progress, settings } = store.getState();
+    expect(progress.best).toEqual({ diver: 20 });
+    // Its requirements met, the Chronograph opens on the way in.
+    expect(progress.unlocked).toEqual(['diver', 'chronograph']);
+    expect(settings.sound).toBe(false);
+    expect(settings.theme).toBe(DEFAULTS.settings.theme);
+    expect(savedIn(storage)).toMatchObject({ version: SAVE_VERSION });
+  });
+
+  it('opens a watch that a merge earns, though neither side had', () => {
+    const store = createAppStore(memoryStorage(), DEFAULTS);
+    // This device has the Diver's score; another has the points.
+    store.getState().recordScore('diver', 20);
+    store.getState().mergeSaved({ progress: { best: {}, points: 400 } });
+    expect(store.getState().progress.unlocked).toContain('chronograph');
+  });
+
+  it('keeps counting Dailies after a backup from a clock set ahead', () => {
+    const today = 10;
+    const store = createAppStore(memoryStorage(), DEFAULTS, () => today);
+    store.getState().mergeSaved({
+      daily: { number: today + 30, best: 99, marks: '' },
+      reserve: { days: 7, woundOn: today + 30 },
+    });
+    expect(store.getState().daily).toBeNull();
+    expect(store.getState().recordDaily(today, 12, ['good']).counted).toBe(
+      true
+    );
+    expect(store.getState().daily).toEqual({
+      number: today,
+      best: 12,
+      marks: 'G',
+    });
+  });
+
+  it('resets the settings and leaves progress alone', () => {
+    const storage = memoryStorage();
+    const store = createAppStore(storage, DEFAULTS);
+    store.getState().updateSettings({ sound: false, theme: 'dark' });
+    store.getState().recordScore('diver', 20);
+    store.getState().resetSettings();
+    const reloaded = createAppStore(storage, DEFAULTS).getState();
+    expect(reloaded.settings).toEqual(DEFAULTS.settings);
+    expect(reloaded.progress.best).toEqual({ diver: 20 });
+  });
+
+  it('erases progress for good, keeping the settings and tips', () => {
+    const storage = memoryStorage();
+    const store = createAppStore(storage, DEFAULTS);
+    store.getState().updateSettings({ language: 'tr' });
+    store.getState().markTip('perfect');
+    store.getState().recordScore('diver', 50);
+    store.getState().recordDaily(4, 12, ['good']);
+    store.getState().recordTiming('diver', [3, -2], ['perfect', 'good']);
+    store.getState().engrave('diver', { errors: [1], bestStreak: 10 });
+    store.getState().recordLine('diver', [1000, 0, 50, 50, 9, 1, 8]);
+    store.getState().eraseProgress();
+
+    // Not merged back from what was stored, unlike every other save.
+    for (const state of [
+      store.getState(),
+      createAppStore(storage, DEFAULTS).getState(),
+    ]) {
+      expect(state.progress).toEqual(INITIAL_PROGRESS);
+      expect(state.daily).toBeNull();
+      expect(state.reserve).toEqual(UNWOUND);
+      expect(state.timing).toEqual(NO_TIMING);
+      expect(state.engravings).toEqual({});
+      expect(state.dailies).toEqual({});
+      expect(state.history).toEqual({});
+      expect(state.settings.language).toBe('tr');
+      expect(state.tips).toEqual(['perfect']);
+    }
+  });
+
+  it('keeps every tab’s round lines, on this device only', () => {
+    const storage = memoryStorage();
+    const first = createAppStore(storage, DEFAULTS);
+    const second = createAppStore(storage, DEFAULTS);
+    first.getState().recordLine('diver', [1000, 0, 12, 12, 3, 2, 9]);
+    // The second tab writes from memory that never saw the first's round.
+    second.getState().recordLine('diver', [2000, 1, 5, 5, 1, -1, 7]);
+    const reloaded = createAppStore(storage, DEFAULTS).getState();
+    expect(reloaded.history['diver']?.map(([at]) => at)).toEqual([1000, 2000]);
+    expect(cloudSaveOf(reloaded)).not.toHaveProperty('history');
+  });
+
+  it('keeps each Daily’s best in the archive, and takes in another device’s', () => {
+    const store = createAppStore(memoryStorage(), DEFAULTS, () => 12);
+    store.getState().recordDaily(11, 7, ['good']);
+    store.getState().recordDaily(12, 9, ['good']);
+    store.getState().recordDaily(12, 4, ['good']);
+    expect(store.getState().dailies).toEqual({ '11': 7, '12': 9 });
+    store.getState().mergeSaved({ dailies: { '10': 3, '11': 8 } });
+    expect(store.getState().dailies).toEqual({ '10': 3, '11': 8, '12': 9 });
   });
 
   it('restores a backup without losing anything earned since', () => {

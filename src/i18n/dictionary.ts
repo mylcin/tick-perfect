@@ -131,8 +131,6 @@ export interface Dictionary {
     readonly ready: (number: number) => string;
     /** Under the Daily's button until the first one is played. */
     readonly intro: string;
-    /** In its place, while the day's watch is still locked. */
-    readonly locked: (watch: string) => string;
   };
 
   /** A friend's challenge link: their round, to beat. */
@@ -305,6 +303,19 @@ export interface Dictionary {
     /** The file picker's label. */
     readonly restore: string;
     readonly restoreOutcomes: Readonly<Record<RestoreOutcome, string>>;
+    /** Starting over: the settings and the progress, each on its own. */
+    readonly reset: string;
+    readonly resetHint: string;
+    readonly resetSettings: string;
+    readonly settingsReset: string;
+    readonly eraseProgress: string;
+    /** Asked before erasing; nothing is erased until it is confirmed. */
+    readonly eraseConfirm: string;
+    readonly erase: string;
+    readonly keepProgress: string;
+    readonly progressErased: string;
+    /** Why erasing waits while signed in: the account would bring it back. */
+    readonly eraseSignedIn: string;
     /** The link to the privacy notice, at the panel's foot. */
     readonly privacy: string;
   };
@@ -385,6 +396,24 @@ export interface Dictionary {
     readonly early: string;
     /** The trace as a screen reader hears it: its hits' rate and spread. */
     readonly trace: (count: number, rate: number, spread: number) => string;
+    /** The latest rounds on the watch, summed up against those before. */
+    readonly latest: string;
+    /** How the latest rounds' figures are worked out. */
+    readonly latestNote: string;
+    /** A choice of how many rounds to sum up: "Last 10". */
+    readonly lastRounds: (count: number) => string;
+    /** Fewer rounds played than were asked for. */
+    readonly roundsSoFar: (count: number) => string;
+    readonly averageScore: string;
+    readonly averageScoreValue: (score: number) => string;
+    /** A figure's change on as many rounds before, for screen readers. */
+    readonly change: (change: string, count: number) => string;
+    /** Recent Dailies, the days played and the run of them. */
+    readonly daily: string;
+    readonly dailyRun: (days: number) => string;
+    readonly dailyPlayed: (played: number, days: number) => string;
+    /** One day's cell, as a screen reader hears it (null: not played). */
+    readonly dailyDay: (number: number, best: number | null) => string;
   };
 
   /** Read out by screen readers as the game changes state. */

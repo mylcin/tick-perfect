@@ -158,9 +158,9 @@ export function App() {
   }, [player]);
 
   const playing = screen === 'game';
-  // A round is only ever played on an unlocked watch; should a Daily or a
-  // challenge still be under way on one that isn't (a save restored in
-  // another tab), it is drawn in full all the same.
+  // A Daily is played on its watch even before the collection opens it,
+  // and a challenge still under way on one that isn't (a save restored in
+  // another tab) goes on: both are drawn in full while they're played.
   const shownInFull = unlocked || (playing && roundMode.kind !== 'collection');
   const mode: RigMode = playing
     ? resultShown

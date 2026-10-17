@@ -105,7 +105,6 @@ export const tr: Dictionary = {
       `Yeni Daily ${hours > 0 ? `${String(hours)} sa ` : ''}${String(minutes)} dk sonra`,
     ready: number => `Daily #${String(number)} hazır`,
     intro: 'Bugün herkese aynı hedefler · güç rezervini kurar',
-    locked: watch => `Bugünkü Daily için önce ${watch} saatini aç`,
   },
 
   challenge: {
@@ -313,8 +312,21 @@ export const tr: Dictionary = {
       restored: 'İlerleme geri yüklendi. Sende olan hiçbir şey kaybolmadı.',
       unchanged: 'Bu yedekte yeni bir şey yok: hepsi zaten sende.',
       unreadable: 'Dosya okunamadı.',
+      tooLarge: 'Bu dosya bir yedek olamayacak kadar büyük.',
       foreign: 'Bu dosya bir Tick Perfect yedeği değil.',
     },
+    reset: 'Baştan başla',
+    resetHint: 'Ayarlar ve ilerleme ayrı ayrı sıfırlanır.',
+    resetSettings: 'Ayarları sıfırla',
+    settingsReset: 'Ayarlar varsayılanlarına döndü.',
+    eraseProgress: 'İlerlemeyi sil',
+    eraseConfirm:
+      'Bu cihazdaki tüm skorlar, saatler, Daily’ler ve başarımlar silinsin mi? İleride lazım olabilirse önce yedekle.',
+    erase: 'Sil',
+    keepProgress: 'Vazgeç',
+    progressErased: 'İlerleme silindi. Bu cihaz sıfırdan başlıyor.',
+    eraseSignedIn:
+      'İlerlemen hesabında da duruyor, silsen de geri gelir. Bu cihazdan silmek için önce çıkış yap.',
     privacy: 'Gizlilik ve aydınlatma metni',
   },
 
@@ -388,6 +400,23 @@ export const tr: Dictionary = {
     early: 'erken',
     trace: (count, rate, spread) =>
       `Son ${String(count)} isabetin izi: ortalama ${rateText(rate)}, sapma ±${String(spread)} ms.`,
+    latest: 'Son turlar',
+    latestNote:
+      'Bu saatte, her modda, önceki aynı sayıda turla karşılaştırılarak. Mükemmel: Perfect’lerin isabetlere oranı; ortalama: isabetlerin ortalama hatası, geç +; sapma: isabetlerin bunun çevresinde ne kadar dağıldığı.',
+    lastRounds: count => `Son ${String(count)}`,
+    roundsSoFar: count => `Şimdiye dek ${String(count)} tur`,
+    averageScore: 'Ort. skor',
+    averageScoreValue: score =>
+      new Intl.NumberFormat('tr', { maximumFractionDigits: 1 }).format(score),
+    change: (change, count) => `önceki ${String(count)} tura göre ${change}`,
+    daily: 'Daily',
+    dailyRun: days => `Art arda ${String(days)} gün`,
+    dailyPlayed: (played, days) =>
+      `Son ${String(days)} günde ${String(played)} gün oynandı`,
+    dailyDay: (number, best) =>
+      best === null
+        ? `Daily #${String(number)}: oynanmadı`
+        : `Daily #${String(number)}: en iyi ${String(best)}`,
   },
 
   announce: {

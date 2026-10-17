@@ -105,6 +105,25 @@ applies actions through the engine. Screens read its snapshot, the scene
 asks it for a pose every frame (the hands move without React re-rendering),
 and sound, vibration and screen-reader announcements follow its events.
 
+**One save.** Settings and progress live in localStorage under
+`tick-perfect` (`src/state/saved.ts`), and every field is read back through
+`restoreSaved`: a wrong type falls back to its default on its own, lists and
+maps are capped, a Daily too far in the future is dropped, and a save that
+can't be parsed is copied to `tick-perfect.unreadable` before anything is
+written over it. Writes merge what is already stored, so two tabs never wipe
+each other's progress; erasing progress (Settings → Start over) is the one
+write that replaces it. Everything earned is also what a backup file and an
+account hold (`CloudSave`); settings, tips and the round history stay on the
+device. Nothing in the save is trusted beyond the player's own screen: the
+boards only take rounds the server has replayed.
+
+**Progress over time.** Each finished round adds a line (score, hits,
+Perfects, rate and spread) to its watch's history, the latest 100 per watch
+(`src/state/history.ts`), and each Daily's best goes into an archive of the
+last 60 days (`src/state/daily-archive.ts`). The timegrapher sums up the
+latest 10, 25 or 100 rounds against as many before them, and shows the last
+fortnight of Dailies with the run of days played.
+
 **Resilience.** Taps are judged at their own timestamps, never the last
 frame drawn. Quality steps down on real slowdowns only, and a device starts
 its next visit on the tier it settled on (`tick-perfect.quality` in

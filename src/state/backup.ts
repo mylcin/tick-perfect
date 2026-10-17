@@ -39,8 +39,12 @@ export function backupFile(save: CloudSave, now: Date): BackupFile {
 /** Why a file can't be restored: not readable, or not a backup at all. */
 export type BackupError = 'unreadable' | 'foreign';
 
-/** How restoring a file went: something new merged in, nothing new, or not. */
-export type RestoreOutcome = 'restored' | 'unchanged' | BackupError;
+/**
+ * How restoring a file went: something new merged in, nothing new, or not
+ * (too large to be a backup, unreadable or not one).
+ */
+export type RestoreOutcome =
+  'restored' | 'unchanged' | 'tooLarge' | BackupError;
 
 type BackupReading =
   | { readonly ok: true; readonly saved: unknown }

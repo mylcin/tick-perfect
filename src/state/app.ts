@@ -8,7 +8,9 @@ import { persistStorage, shouldPersist } from './keep-progress';
 import { INITIAL_PROGRESS } from './progress';
 import { UNWOUND } from './reserve';
 import { SAVE_KEY } from './saved';
+import { NO_DAILIES } from './daily-archive';
 import { NO_ENGRAVINGS } from './engravings';
+import { NO_HISTORY } from './history';
 import { NO_TIMING } from './timegrapher';
 import { FIRST_WATCH } from '../watches/ids';
 import { defaultSettings } from './settings';
@@ -33,6 +35,8 @@ export const appStore = createAppStore(
     reserve: UNWOUND,
     timing: NO_TIMING,
     engravings: NO_ENGRAVINGS,
+    dailies: NO_DAILIES,
+    history: NO_HISTORY,
     tips: [],
   }
 );

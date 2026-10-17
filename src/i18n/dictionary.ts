@@ -161,7 +161,7 @@ export interface Dictionary {
     readonly menu: string;
   };
 
-  /** A ghost: a best round raced again, its hand see-through on the dial. */
+  /** A ghost: a best round raced again, a ring on the dial where it is. */
   readonly ghost: {
     /** The title's button: the watch's best round, again. */
     readonly open: string;

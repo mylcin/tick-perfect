@@ -227,8 +227,9 @@ would not help, since the key would ship in the page. What other players see
 - `src/state/ghost.ts`, `ghost-runner.ts`: ghosts. A new best (the
   watch's, or the day's Daily) keeps its seed and its taps in played time;
   `checkGhost` replays it before a race; the runner plays it beside the
-  round on the same clock, mirroring pauses. Its hand is the seconds
-  hand's geometry, see-through (`parts/ghost-hand.tsx`).
+  round on the same clock, mirroring pauses. Where its hand is shows as a
+  small ring at the dial's edge (`parts/ghost-mark.tsx`); a see-through
+  second hand was tried first and confused players about which was theirs.
 - `src/screens/practice-dialog.tsx`, `game-hud.tsx`, `title-screen.tsx`:
   the Practice button, the set's count and each target's timing in the
   HUD, and the summary with the next set's pace.

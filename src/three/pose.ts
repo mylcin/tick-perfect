@@ -123,7 +123,7 @@ export interface WatchPose {
   readonly cloud: CloudPose | null;
   /** Where a Digital's countdown stands; null when it shows the time. */
   readonly countdown: CountdownState | null;
-  /** A raced ghost's seconds hand, degrees clockwise; null with none. */
+  /** Where a raced ghost's seconds hand is, degrees clockwise; null with none. */
   readonly ghost: number | null;
 }
 

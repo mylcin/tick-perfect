@@ -85,7 +85,7 @@ export interface WatchMaterials {
   readonly crack: MeshBasicMaterial;
   /** The cloud a Pilot's hand is lost in; faded in by the frame loop. */
   readonly cloud: MeshBasicMaterial;
-  /** A raced ghost's seconds hand: the hand's colour, see-through. */
+  /** Where a raced ghost's hand is: the seconds hand's colour, faint. */
   readonly ghostHand: MeshBasicMaterial;
   /**
    * The metals and lume again, for instanced meshes (hour markers, bracelet
@@ -268,8 +268,8 @@ function strapMaterial(
 }
 
 /** An additive layer, invisible until the frame loop raises its opacity. */
-/** How much of a raced ghost's hand shows: there, but never the hand. */
-const GHOST_OPACITY = 0.32;
+/** How much a raced ghost's mark shows: plain to see, never the hand. */
+const GHOST_OPACITY = 0.6;
 
 function overlay(map?: Texture): MeshBasicMaterial {
   return new MeshBasicMaterial({

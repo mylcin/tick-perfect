@@ -48,8 +48,9 @@ uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   of their progress.
 - **Ghosts.** A new best round is kept as a ghost: its seed and the
   moments of its taps, a couple of kB on the device. Race your best, from
-  the title, plays that round's targets again with its ghost's hand
-  see-through on the dial, its score and the gap to it in the corner, and
+  the title, plays that round's targets again with a small ring at the
+  dial's edge where its ghost's hand is (the player's hand stays the only
+  hand on the dial), its score and the gap to it in the corner, and
   the two rounds side by side at the end (score, hits, Perfects, spread);
   a learnt sequence, it counts for nothing. A Daily's retries race the
   day's best round the same way, and count as usual. A ghost is played

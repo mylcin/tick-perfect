@@ -127,8 +127,9 @@ watch's own rules with an easier ramp.
 (`src/state/ghost.ts`), on the device. Raced, it is replayed through the
 engine first (`checkGhost`: a ghost that no longer scores the same is left
 out), then played beside the round by a second controller on the same clock
-(`ghost-runner.ts`), its pauses the player's, its hand drawn see-through
-from `WatchPose.ghost`.
+(`ghost-runner.ts`), its pauses the player's, where its hand is shown by a
+small ring at the dial's edge (`WatchPose.ghost`, `parts/ghost-mark.tsx`),
+never a second hand.
 
 **Progress over time.** Each finished round adds a line (score, hits,
 Perfects, rate and spread) to its watch's history, the latest 100 per watch

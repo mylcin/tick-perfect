@@ -9,6 +9,8 @@ import {
   type HitLeg,
   type HitQuality,
   type LoggedAction,
+  type MissReason,
+  type PracticeOptions,
   type RoundLog,
 } from '../game';
 import { poseFromGame, type WatchPose } from '../three/pose';
@@ -30,9 +32,20 @@ export interface LastHit {
   readonly points: number;
 }
 
+/** The latest target's outcome and timing, as practice shows it. */
+export interface LastTap {
+  /** Counts up with every target, so feedback restarts for each. */
+  readonly id: number;
+  /** How it landed, or why it was missed. */
+  readonly outcome: HitQuality | MissReason;
+  /** Its timing error in ms (negative early); null if never tapped. */
+  readonly ms: number | null;
+}
+
 export interface GameSnapshot {
   readonly state: GameState;
   readonly lastHit: LastHit | null;
+  readonly lastTap: LastTap | null;
   /** How every hit of the round landed, in order (both taps of a pair). */
   readonly qualities: readonly HitQuality[];
   /** Every hit's timing error in ms, in the same order; negative is early. */
@@ -74,11 +87,14 @@ export interface GameController {
 interface ControllerOptions {
   /** Crack the crystal on a miss; off for the attract-mode bot. */
   readonly cracks?: boolean;
+  /** Play practice sets: a miss moves on, and the set ends on its own. */
+  readonly practice?: PracticeOptions;
 }
 
 const INITIAL_SNAPSHOT: GameSnapshot = {
   state: INITIAL_STATE,
   lastHit: null,
+  lastTap: null,
   qualities: [],
   errors: [],
   endedAt: null,
@@ -86,10 +102,11 @@ const INITIAL_SNAPSHOT: GameSnapshot = {
 
 export function createGameController(
   rules: GameRules,
-  { cracks = true }: ControllerOptions = {}
+  { cracks = true, practice }: ControllerOptions = {}
 ): GameController {
   let snapshot = INITIAL_SNAPSHOT;
   let hits = 0;
+  let taps = 0;
   const score = createObservable(0);
   const listeners = new Set<EventListener>();
   let round: { seed: number; start: number; actions: LoggedAction[] } | null =
@@ -100,7 +117,7 @@ export function createGameController(
     observedAt?: number
   ): readonly GameEvent[] {
     const previous = snapshot.state;
-    const { state, events } = update(previous, action, rules);
+    const { state, events } = update(previous, action, rules, practice);
     if (state === previous) return events;
     // What a replay needs: an action that changed nothing changes nothing
     // played back either.
@@ -114,12 +131,13 @@ export function createGameController(
       round?.actions.push([action.type, action.time]);
     }
 
-    let { lastHit, qualities, errors, endedAt } = snapshot;
+    let { lastHit, lastTap, qualities, errors, endedAt } = snapshot;
     for (const event of events) {
       switch (event.type) {
         case 'started':
         case 'exited':
           lastHit = null;
+          lastTap = null;
           qualities = [];
           errors = [];
           endedAt = null;
@@ -142,7 +160,14 @@ export function createGameController(
           qualities = [...qualities, event.quality];
           errors = [...errors, event.ms];
           score.set(event.score);
+          taps += 1;
+          lastTap = { id: taps, outcome: event.quality, ms: event.ms };
           break;
+        case 'slip':
+          taps += 1;
+          lastTap = { id: taps, outcome: event.reason, ms: event.ms };
+          break;
+        case 'complete':
         case 'miss':
           endedAt = Math.max(
             'time' in action ? action.time : event.time,
@@ -154,7 +179,7 @@ export function createGameController(
       }
     }
 
-    snapshot = { state, lastHit, qualities, errors, endedAt };
+    snapshot = { state, lastHit, lastTap, qualities, errors, endedAt };
     listeners.forEach(listener => {
       listener(events, snapshot);
     });
@@ -178,12 +203,12 @@ export function createGameController(
           }
         : null;
     const crack =
-      cracks && state.phase === 'gameOver'
+      cracks && state.phase === 'gameOver' && state.miss
         ? {
             angle: base.seconds,
             // From when the miss was seen: the crack and the jolt start
             // whole even when a passed hand is noticed a moment late.
-            age: now - (endedAt ?? state.miss.time),
+            age: now - (endedAt ?? state.endedAt),
             seed: state.round.seed + state.round.hits,
           }
         : null;

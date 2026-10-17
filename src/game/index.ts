@@ -6,6 +6,7 @@ export * from './daily.js';
 export * from './difficulty.js';
 export * from './near-miss.js';
 export * from './plan.js';
+export * from './practice.js';
 export * from './replay.js';
 export * from './rng.js';
 export * from './rules/chronograph.js';

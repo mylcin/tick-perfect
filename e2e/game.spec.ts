@@ -217,7 +217,7 @@ test('Space is a tap even with the pause button focused', async ({ page }) => {
   // Not a pause: the press was judged as a tap, too early.
   await waitForPhase(page, 'gameOver');
   const state = await gameState(page);
-  expect(state.phase === 'gameOver' && state.miss.reason).toBe('early');
+  expect(state.phase === 'gameOver' && state.miss?.reason).toBe('early');
   await expect(page.getByRole('dialog', { name: 'Paused' })).toBeHidden();
 });
 

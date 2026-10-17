@@ -46,6 +46,13 @@ uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   with that day's best, the run of days played and how many were. Each
   Daily's best is kept for 60 days, and follows the player like the rest
   of their progress.
+- **Practice**, from the title, on any watch the collection has opened:
+  sets of 25 targets where a miss moves on to the next, each target's
+  timing shown as it lands, and a summary at the end (hits, Perfects,
+  misses, best streak, rate and spread). A slow pace, the hand slower and
+  the windows wider, is the default until the watch is certified; the
+  next set can go at either. Practice counts towards nothing: no best,
+  level, Daily, achievement, timing record or board.
 - **Start over** in Settings: reset the settings, or erase the progress on
   this device after a confirmation (signed out, so an account can't bring
   it straight back).

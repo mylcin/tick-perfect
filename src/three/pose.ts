@@ -200,7 +200,7 @@ export function poseFromGame(
     state.phase === 'paused'
       ? state.pausedAt
       : state.phase === 'gameOver'
-        ? Math.max(state.miss.time, endedAt ?? state.miss.time)
+        ? Math.max(state.endedAt, endedAt ?? state.endedAt)
         : now;
   const { segment } = state.round;
   const { twist } = segment;

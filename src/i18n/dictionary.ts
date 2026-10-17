@@ -1,4 +1,4 @@
-import type { MissReason } from '../game';
+import type { MissReason, PracticePace } from '../game';
 import type { RestoreOutcome } from '../state/backup';
 import type { CertificateTier } from '../state/certificates';
 import type { EngravingId } from '../state/engravings';
@@ -133,6 +133,34 @@ export interface Dictionary {
     readonly intro: string;
   };
 
+  /** Practice sets: a miss moves on, and nothing is saved. */
+  readonly practice: {
+    /** The title's button. */
+    readonly open: string;
+    readonly paces: Readonly<Record<PracticePace, string>>;
+    /** The pace picker's name. */
+    readonly pace: string;
+    /** A practice target's outcome, under the watch. */
+    readonly good: string;
+    readonly miss: string;
+    /** Its timing, beside it: "12 ms early", "on time". */
+    readonly timing: (ms: number) => string;
+    /** A miss as screen readers hear it, the set going on. */
+    readonly missed: (timing: string | null) => string;
+    /** The results. */
+    readonly title: string;
+    readonly hits: (hits: number, of: number) => string;
+    readonly perfects: string;
+    readonly misses: string;
+    readonly bestStreak: string;
+    readonly rate: string;
+    readonly spread: string;
+    /** That none of it counts. */
+    readonly note: string;
+    readonly again: string;
+    readonly menu: string;
+  };
+
   /** A friend's challenge link: their round, to beat. */
   readonly challenge: {
     readonly title: string;
@@ -218,6 +246,8 @@ export interface Dictionary {
     readonly today: (score: number) => string;
     /** In place of the best on a challenge. */
     readonly toBeat: (score: number) => string;
+    /** A practice set's corner: the target being played, of how many. */
+    readonly practice: (target: number, of: number) => string;
     /** Perfects towards the next multiplier; `next` is null at the top. */
     readonly streak: (
       streak: number,

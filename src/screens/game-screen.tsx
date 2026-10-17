@@ -13,7 +13,13 @@ import {
   type Ticket,
   type TicketRequest,
 } from '../online';
-import { nearMiss, type HitQuality, type MissReason } from '../game';
+import {
+  nearMiss,
+  PRACTICE_SET,
+  type HitQuality,
+  type MissReason,
+  type PracticePace,
+} from '../game';
 import { VIBRATIONS } from '../feedback/cues';
 import { vibrate } from '../feedback/haptics';
 import { useGameFeedback } from '../hooks/use-game-feedback';
@@ -54,6 +60,7 @@ import {
 } from './game-over-dialog';
 import type { Standing } from './milestones';
 import { PauseDialog } from './pause-dialog';
+import { PracticeDialog, type PracticeResult } from './practice-dialog';
 import { rewardOf } from './reward';
 
 /** Lets the camera settle on the dial before the first round starts. */
@@ -76,9 +83,13 @@ function rankedModeOf(mode: RoundMode): RankedMode | null {
     case 'daily':
       return { kind: 'daily', number: mode.number };
     case 'challenge':
+    case 'practice':
       return null;
   }
 }
+
+/** A mode whose rounds are saved: any but practice. */
+type SavedMode = Exclude<RoundMode, { readonly kind: 'practice' }>;
 
 /** A fresh seed per round; the seed is kept, so any round can be replayed. */
 function randomSeed(): number {
@@ -90,7 +101,7 @@ function randomSeed(): number {
  * and says how it counted.
  */
 function recordRound(
-  mode: RoundMode,
+  mode: SavedMode,
   watch: WatchId,
   score: number,
   qualities: readonly HitQuality[]
@@ -147,6 +158,9 @@ function standingFor(
   collectionBest: number,
   todaysBest: number
 ): Standing {
+  if (mode.kind === 'practice') {
+    return { kind: 'practice', score: PRACTICE_SET.targets };
+  }
   const toBeat = scoreToBeat(mode);
   if (toBeat !== null) return { kind: 'toBeat', score: toBeat };
   return mode.kind === 'daily'
@@ -162,7 +176,7 @@ export function GameScreen({
   spec: WatchSpec;
 }) {
   const t = useT();
-  const { state, lastHit } = useSyncExternalStore(
+  const { state, lastHit, lastTap } = useSyncExternalStore(
     controller.subscribe,
     controller.snapshot
   );
@@ -184,9 +198,13 @@ export function GameScreen({
   const still = reducedMotionSetting ?? systemReducedMotion;
   const showTitle = useSession(session => session.showTitle);
   const focus = useSession(session => session.focus);
+  const playMode = useSession(session => session.playMode);
   const select = useAppState(app => app.select);
   const setResultShown = useSession(session => session.setResultShown);
   const [result, setResult] = useState<RoundResult | null>(null);
+  const [practiceResult, setPracticeResult] = useState<PracticeResult | null>(
+    null
+  );
   const [resultVisible, setResultVisible] = useState(false);
   const [countdown, setCountdown] = useState<number | null>(null);
   /** Counts the rounds asked for; each one starts after the ready beat. */
@@ -243,10 +261,44 @@ export function GameScreen({
         for (const event of events) {
           if (event.type === 'started' || event.type === 'exited') {
             setResult(null);
+            setPracticeResult(null);
             setResultVisible(false);
           }
           const { state: over, qualities, errors } = controller.snapshot();
-          if (event.type === 'miss' && over.phase === 'gameOver') {
+          // Practice saves nothing: a miss is said as the set goes on, and
+          // its end shows how it went.
+          if (event.type === 'slip') {
+            announce(
+              t.practice.missed(
+                event.ms === null
+                  ? null
+                  : t.practice.timing(Math.round(event.ms))
+              )
+            );
+          }
+          if (
+            event.type === 'complete' &&
+            over.phase === 'gameOver' &&
+            mode.kind === 'practice'
+          ) {
+            const { round } = over;
+            setPracticeResult({
+              of: PRACTICE_SET.targets,
+              hits: round.hits,
+              perfects: round.perfects,
+              misses: round.slips ?? 0,
+              bestStreak: round.bestStreak,
+              timing:
+                errors.length >= TIMING_MIN_HITS ? roundStats(errors) : null,
+              pace: mode.pace,
+            });
+            announce(t.practice.hits(round.hits, PRACTICE_SET.targets), true);
+          }
+          if (
+            event.type === 'miss' &&
+            over.phase === 'gameOver' &&
+            mode.kind !== 'practice'
+          ) {
             const outcome = recordRound(mode, spec.id, event.score, qualities);
             // Timing measures skill, not score: every mode counts it, and
             // keeps a line for the round to compare later ones with.
@@ -300,15 +352,16 @@ export function GameScreen({
       }),
     [controller, mode, spec, t]
   );
+  const ended = result ?? practiceResult;
   useEffect(() => {
-    if (!result) return;
+    if (!ended) return;
     const timer = setTimeout(() => {
       setResultVisible(true);
     }, RESULT_DELAY_MS);
     return () => {
       clearTimeout(timer);
     };
-  }, [result]);
+  }, [ended]);
   useEffect(() => {
     setResultShown(resultVisible);
   }, [resultVisible, setResultShown]);
@@ -422,6 +475,16 @@ export function GameScreen({
     controller.dispatch({ type: 'exit' });
     setRoundsAsked(count => count + 1);
   };
+  /** Another practice set: the same pace again, or the other. */
+  const practiseAgain = (pace: PracticePace) => {
+    if (mode.kind === 'practice' && pace === mode.pace) {
+      playAgain();
+      return;
+    }
+    setPracticeResult(null);
+    setResultVisible(false);
+    playMode({ kind: 'practice', pace });
+  };
   /** Straight on to a watch the round just unlocked. */
   const playWatch = (watch: WatchId) => {
     audio.unlock();
@@ -463,6 +526,7 @@ export function GameScreen({
         t={t}
         state={state}
         lastHit={lastHit}
+        lastTap={lastTap}
         rules={controller.rules}
         standing={standing}
         twistHints={learning}
@@ -514,6 +578,12 @@ export function GameScreen({
           askToKeepProgress();
           showTitle();
         }}
+      />
+      <PracticeDialog
+        t={t}
+        result={resultVisible ? practiceResult : null}
+        onAgain={practiseAgain}
+        onMenu={showTitle}
       />
     </section>
   );

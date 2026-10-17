@@ -5,7 +5,7 @@ import { PauseIcon } from '../components/icons';
 import { multiplierFor, type GameRules, type GameState } from '../game';
 import { WithEnglishNames } from '../components/english';
 import type { Dictionary } from '../i18n';
-import type { LastHit } from '../state/game-controller';
+import type { LastHit, LastTap } from '../state/game-controller';
 import type { RoundTip } from '../state/tips';
 import { tipText, twistHintFor } from './hud-hint';
 import type { Standing } from './milestones';
@@ -20,6 +20,7 @@ export function GameHud({
   t,
   state,
   lastHit,
+  lastTap,
   rules,
   standing,
   twistHints,
@@ -32,6 +33,8 @@ export function GameHud({
   t: Dictionary;
   state: GameState;
   lastHit: LastHit | null;
+  /** In practice, every target's outcome and timing, missed ones too. */
+  lastTap: LastTap | null;
   rules: GameRules;
   standing: Standing;
   /** Spell out each twist as it arrives (a watch still being learnt). */
@@ -47,6 +50,12 @@ export function GameHud({
 }) {
   const round = state.phase === 'idle' ? null : state.round;
   const score = round?.score ?? 0;
+  const practice = standing.kind === 'practice';
+  // The target being played: one past those done, the last once it's over.
+  const target = Math.min(
+    (round?.hits ?? 0) + (round?.slips ?? 0) + 1,
+    standing.score
+  );
   const streak = round?.streak ?? 0;
   const meter = streakMeter(streak, rules);
   const factor = multiplierFor(streak, rules.scoring);
@@ -97,9 +106,11 @@ export function GameHud({
             passed ? 'text-accent' : 'text-ink-3'
           }`}
         >
-          {standing.kind === 'toBeat'
-            ? t.game.toBeat(standing.score)
-            : t.game[standing.kind](Math.max(standing.score, score))}
+          {standing.kind === 'practice'
+            ? t.game.practice(target, standing.score)
+            : standing.kind === 'toBeat'
+              ? t.game.toBeat(standing.score)
+              : t.game[standing.kind](Math.max(standing.score, score))}
         </p>
       </div>
 
@@ -113,7 +124,31 @@ export function GameHud({
         className={`pointer-events-none absolute inset-x-0 bottom-0 flex flex-col items-center gap-3 shade px-6 pt-16 pb-[max(2rem,env(safe-area-inset-bottom))] short:inset-x-auto short:inset-y-0 short:right-0 short:w-[24%] short:justify-center short:bg-none short:pt-0 short:pr-[max(1rem,env(safe-area-inset-right))] short:pb-0 ${fade}`}
       >
         <div className="relative h-8 w-full" aria-hidden="true">
-          {lastHit && (
+          {practice && lastTap && (
+            <p
+              key={lastTap.id}
+              data-testid="practice-feedback"
+              data-outcome={lastTap.outcome}
+              className={`absolute inset-x-0 animate-float-up text-center text-sm font-medium tracking-[0.2em] tabular-nums ${
+                lastTap.outcome === 'perfect'
+                  ? 'text-accent [text-shadow:0_0_18px_var(--glow)]'
+                  : lastTap.outcome === 'good'
+                    ? 'text-ink-2'
+                    : 'text-ink-3'
+              }`}
+            >
+              <span className="uppercase">
+                {lastTap.outcome === 'perfect'
+                  ? t.game.perfect
+                  : lastTap.outcome === 'good'
+                    ? t.practice.good
+                    : t.practice.miss}
+              </span>
+              {lastTap.ms !== null &&
+                ` · ${t.practice.timing(Math.round(lastTap.ms))}`}
+            </p>
+          )}
+          {!practice && lastHit && (
             <p
               key={lastHit.id}
               data-testid="hit-feedback"

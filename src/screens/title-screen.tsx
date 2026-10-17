@@ -533,6 +533,22 @@ export function TitleScreen() {
                 : t.collection.locked}
           </Button>
         )}
+        {/* Practice on the watch on show: slowly until it is certified. */}
+        {!failed && unlocked && (
+          <Button
+            variant="quiet"
+            aria-disabled={!ready}
+            className="-my-2 min-h-10! px-4! text-xs! tracking-[0.12em]! uppercase short:-my-1"
+            onClick={() => {
+              startMode({
+                kind: 'practice',
+                pace: tier === null ? 'slow' : 'normal',
+              });
+            }}
+          >
+            {t.practice.open}
+          </Button>
+        )}
         {!failed && (
           <div className="flex flex-col items-center gap-1">
             <Button

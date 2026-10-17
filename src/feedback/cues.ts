@@ -40,6 +40,10 @@ export function cueFor(
     if (event.type === 'miss') {
       return { sound: 'miss', vibration: VIBRATIONS.miss };
     }
+    // A practice miss plays on: the soft sound of a streak let go.
+    if (event.type === 'slip') {
+      return { sound: 'release', vibration: VIBRATIONS.hit };
+    }
     if (event.type === 'hit') {
       const accents: SoundName[] = [];
       // Both ends of a chronograph pair press a pusher too, as a real

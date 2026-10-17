@@ -106,6 +106,12 @@ describe('cueFor', () => {
     ).toEqual({ sound: 'miss', vibration: VIBRATIONS.miss });
   });
 
+  it('lets a practice miss go softly, the set playing on', () => {
+    expect(
+      cueFor([{ type: 'slip', time: 0, reason: 'early', offset: -20, ms: -60 }])
+    ).toEqual({ sound: 'release', vibration: VIBRATIONS.hit });
+  });
+
   it('stays quiet for everything else', () => {
     expect(cueFor([])).toBeNull();
     expect(cueFor([{ type: 'started', time: 0 }])).toBeNull();

@@ -52,6 +52,11 @@ describe('milestoneOf', () => {
     expect(milestoneOf(13, 15, { kind: 'today', score: 0 })).toBeNull();
     expect(milestoneOf(13, 15, { kind: 'toBeat', score: 30 })).toBeNull();
   });
+
+  it('has nothing to pass in practice', () => {
+    expect(milestoneOf(24, 26, { kind: 'practice', score: 25 })).toBeNull();
+    expect(milestoneOf(10, 16, { kind: 'practice', score: 25 })).toBeNull();
+  });
 });
 
 describe('passesMilestone', () => {

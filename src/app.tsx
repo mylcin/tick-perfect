@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect, useMemo } from 'react';
 
 import { audio } from './audio';
 import { Announcer } from './components/announcer';
+import { PRACTICE_SET, practiceRules } from './game';
 import { ErrorBoundary } from './components/error-boundary';
 import { useAttractMode } from './hooks/use-attract-mode';
 import { usePrefersReducedMotion } from './hooks/use-prefers-reduced-motion';
@@ -118,7 +119,17 @@ export function App() {
     [spec, rules]
   );
   const attract = useAttractMode(rules);
-  const player = useMemo(() => createGameController(rules), [rules]);
+  // Practice plays sets, at the pace picked, by the same rules eased.
+  const practicePace = roundMode.kind === 'practice' ? roundMode.pace : null;
+  const player = useMemo(
+    () =>
+      practicePace
+        ? createGameController(practiceRules(rules, practicePace), {
+            practice: PRACTICE_SET,
+          })
+        : createGameController(rules),
+    [rules, practicePace]
+  );
 
   useEffect(() => {
     online.connectProgress(

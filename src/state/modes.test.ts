@@ -21,6 +21,13 @@ describe('round modes', () => {
     expect(scoreToBeat(COLLECTION_MODE)).toBeNull();
   });
 
+  it('practises on the watch on show, on a fresh seed, with nothing to beat', () => {
+    const practice = { kind: 'practice', pace: 'slow' } as const;
+    expect(fixedSeed(practice)).toBeNull();
+    expect(modeWatch(practice)).toBeNull();
+    expect(scoreToBeat(practice)).toBeNull();
+  });
+
   it('plays a Daily from its number', () => {
     expect(fixedSeed(daily)).toBe(dailySeed(2));
     expect(modeWatch(daily)).toBe('chronograph');

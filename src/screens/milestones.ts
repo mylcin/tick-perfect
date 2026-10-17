@@ -3,10 +3,11 @@ import { CERTIFICATES, type CertificateTier } from '../state/certificates';
 
 /**
  * The score in the HUD's corner: the best on the watch, the day's best on a
- * Daily, or a challenge's score to beat.
+ * Daily, or a challenge's score to beat. In practice, the set's length:
+ * the corner counts its targets, and there is nothing to pass.
  */
 export interface Standing {
-  readonly kind: 'best' | 'today' | 'toBeat';
+  readonly kind: 'best' | 'today' | 'toBeat' | 'practice';
   readonly score: number;
 }
 
@@ -30,6 +31,7 @@ export function milestoneOf(
   after: number,
   standing: Standing
 ): Milestone | null {
+  if (standing.kind === 'practice') return null;
   if (standing.kind === 'best') {
     const crossed = CERTIFICATES.filter(
       ({ score }) => score > standing.score && before < score && score <= after

@@ -25,6 +25,9 @@ import { handAt, isBlockedAt } from './twists/gmt.js';
 //               pause│   │resume          exit (from any phase) ──▶ idle
 //                    ▼   │
 //                    paused
+//
+// A practice set (PracticeOptions) plays the same, except that a miss
+// moves on to the next target and the set is over after so many targets.
 
 /** The seconds hand starts every round at 12 o'clock, moving clockwise. */
 export const START_ANGLE = 0;
@@ -44,6 +47,14 @@ export interface Round {
   readonly streak: number;
   readonly bestStreak: number;
   readonly segment: Segment;
+  /** Practice only: targets missed, each moving on to the next. */
+  readonly slips?: number;
+}
+
+/** A practice set: a miss moves on to the next target, and `targets` of
+ * them, hit or missed, finish it. */
+export interface PracticeOptions {
+  readonly targets: number;
 }
 
 /** `blocked`: the tap was on target, but the GMT hand covered it. */
@@ -74,7 +85,10 @@ export interface PausedState {
 export interface GameOverState {
   readonly phase: 'gameOver';
   readonly round: Round;
-  readonly miss: Miss;
+  /** What ended the round; null for a practice set played to its end. */
+  readonly miss: Miss | null;
+  /** When it ended: the miss, or the practice set's last target. */
+  readonly endedAt: number;
 }
 
 export type GameState = IdleState | PlayingState | PausedState | GameOverState;
@@ -112,6 +126,21 @@ export type GameEvent =
       readonly time: number;
       readonly reason: MissReason;
       readonly offset: number;
+      readonly score: number;
+    }
+  | {
+      /** Practice only: a miss that moved on to the next target. */
+      readonly type: 'slip';
+      readonly time: number;
+      readonly reason: MissReason;
+      readonly offset: number;
+      /** The tap's timing error in ms; null when there was no tap. */
+      readonly ms: number | null;
+    }
+  | {
+      /** Practice only: the set's last target, hit or missed. */
+      readonly type: 'complete';
+      readonly time: number;
       readonly score: number;
     }
   | { readonly type: 'paused'; readonly time: number }
@@ -168,28 +197,152 @@ function endRound(
   offset: number
 ): Transition {
   return {
-    state: { phase: 'gameOver', round, miss: { reason, time, offset } },
+    state: {
+      phase: 'gameOver',
+      round,
+      miss: { reason, time, offset },
+      endedAt: time,
+    },
     events: [{ type: 'miss', time, reason, offset, score: round.score }],
   };
 }
 
-/** Ends the round if the hand has run past the target by `time`. */
+/**
+ * Ends the round if the hand has run past the target by `time` (in
+ * practice, moves on to the next target from where it ran past).
+ */
 function checkPassed(
   round: Round,
   time: number,
-  rules: GameRules
+  rules: GameRules,
+  practice: PracticeOptions | undefined
 ): Transition | null {
   if (time < passedAt(round, rules)) return null;
   const { segment } = round;
-  return endRound(
+  return missed(
     round,
     'passed',
     windowCloseTime(segment),
-    segment.target.hitWindow
+    segment.target.hitWindow,
+    rules,
+    practice
   );
 }
 
-function tap(state: PlayingState, time: number, rules: GameRules): Transition {
+/** Targets played in a round so far, hit or (in practice) missed. */
+function attempts(round: Round): number {
+  return round.hits + (round.slips ?? 0);
+}
+
+/**
+ * The next target, from the hand at `time` going `direction`, as hard as
+ * `hits` hits have made it.
+ */
+function nextTarget(
+  round: Round,
+  time: number,
+  direction: Segment['direction'],
+  hits: number,
+  rules: GameRules
+) {
+  const { segment } = round;
+  return planTarget(
+    {
+      time,
+      handAngle: handAngleAt(segment, time),
+      direction,
+      ringAngle: ringAngleAt(segment, time),
+      ...(segment.gmt && { gmtAngle: handAt(segment.gmt, segment, time) }),
+    },
+    difficultyAt(rules.difficulty, hits),
+    rules,
+    round.rng,
+    { seed: round.seed, target: hits + (round.slips ?? 0) }
+  );
+}
+
+/**
+ * The practice set's round after `round`'s latest target: over once it has
+ * had them all, otherwise still playing.
+ */
+function practiceGoesOn(
+  round: Round,
+  time: number,
+  practice: PracticeOptions,
+  events: GameEvent[]
+): Transition {
+  if (attempts(round) < practice.targets) {
+    return { state: { phase: 'playing', round }, events };
+  }
+  return {
+    state: { phase: 'gameOver', round, miss: null, endedAt: time },
+    events: [...events, { type: 'complete', time, score: round.score }],
+  };
+}
+
+/**
+ * A practice miss: the streak is broken and the hand moves on to a new
+ * target, turning back as a tap turns it, or sweeping on if it ran past.
+ */
+function slip(
+  round: Round,
+  reason: MissReason,
+  time: number,
+  offset: number,
+  rules: GameRules,
+  practice: PracticeOptions
+): Transition {
+  const { segment } = round;
+  const tapped = reason !== 'passed';
+  const planned = nextTarget(
+    round,
+    time,
+    tapped ? reverse(segment.direction) : segment.direction,
+    round.hits,
+    rules
+  );
+  const next: Round = {
+    ...round,
+    rng: planned.rng,
+    streak: 0,
+    slips: (round.slips ?? 0) + 1,
+    segment: planned.segment,
+  };
+  const events: GameEvent[] = [
+    {
+      type: 'slip',
+      time,
+      reason,
+      offset,
+      ms: tapped ? (offset / closingSpeed(segment)) * MS_PER_SECOND : null,
+    },
+  ];
+  if (multiplierFor(round.streak, rules.scoring) !== 1) {
+    events.push({ type: 'multiplier', time, factor: 1 });
+  }
+  return practiceGoesOn(next, time, practice, events);
+}
+
+/** A miss: the end of the round, or in practice the next target. */
+function missed(
+  round: Round,
+  reason: MissReason,
+  time: number,
+  offset: number,
+  rules: GameRules,
+  practice: PracticeOptions | undefined
+): Transition {
+  return practice
+    ? slip(round, reason, time, offset, rules, practice)
+    : endRound(round, reason, time, offset);
+}
+
+function tap(
+  state: PlayingState,
+  time: number,
+  rules: GameRules,
+  practice: PracticeOptions | undefined
+): Transition {
   const { round } = state;
   const { segment } = round;
 
@@ -199,16 +352,23 @@ function tap(state: PlayingState, time: number, rules: GameRules): Transition {
   if (time - segment.startTime < rules.timing.tapDebounceMs) {
     return unchanged(state);
   }
-  const passed = checkPassed(round, time, rules);
+  const passed = checkPassed(round, time, rules, practice);
   if (passed) return passed;
 
   const judgement = judgeTap(segment, time);
   if (judgement.kind === 'miss') {
-    return endRound(round, judgement.reason, time, judgement.offset);
+    return missed(
+      round,
+      judgement.reason,
+      time,
+      judgement.offset,
+      rules,
+      practice
+    );
   }
   // On target, but under the GMT hand: that counts as a miss too.
   if (isBlockedAt(segment, time)) {
-    return endRound(round, 'blocked', time, judgement.offset);
+    return missed(round, 'blocked', time, judgement.offset, rules, practice);
   }
 
   const scored = scoreHit(judgement.quality, round.streak, rules.scoring);
@@ -222,19 +382,7 @@ function tap(state: PlayingState, time: number, rules: GameRules): Transition {
         segment: chronoStopLeg(segment, twist, time, judgement.offset),
         rng: round.rng,
       }
-    : planTarget(
-        {
-          time,
-          handAngle: handAngleAt(segment, time),
-          direction: reverse(segment.direction),
-          ringAngle: ringAngleAt(segment, time),
-          ...(segment.gmt && { gmtAngle: handAt(segment.gmt, segment, time) }),
-        },
-        difficultyAt(rules.difficulty, hits),
-        rules,
-        round.rng,
-        { seed: round.seed, target: hits }
-      );
+    : nextTarget(round, time, reverse(segment.direction), hits, rules);
   const next: Round = {
     ...round,
     rng: planned.rng,
@@ -262,6 +410,10 @@ function tap(state: PlayingState, time: number, rules: GameRules): Transition {
   if (scored.multiplier !== multiplierFor(round.streak, rules.scoring)) {
     events.push({ type: 'multiplier', time, factor: scored.multiplier });
   }
+  // The start of a pair is half a target: a set ends on a whole one.
+  if (practice && !pairStarted) {
+    return practiceGoesOn(next, time, practice, events);
+  }
   return { state: { phase: 'playing', round: next }, events };
 }
 
@@ -281,7 +433,8 @@ function shiftRound(round: Round, delta: number): Round {
 export function update(
   state: GameState,
   action: GameAction,
-  rules: GameRules
+  rules: GameRules,
+  practice?: PracticeOptions
 ): Transition {
   if ('time' in action && !Number.isFinite(action.time)) {
     throw new RangeError(
@@ -297,17 +450,18 @@ export function update(
 
     case 'tap':
       return state.phase === 'playing'
-        ? tap(state, action.time, rules)
+        ? tap(state, action.time, rules, practice)
         : unchanged(state);
 
     case 'tick':
       return state.phase === 'playing'
-        ? (checkPassed(state.round, action.time, rules) ?? unchanged(state))
+        ? (checkPassed(state.round, action.time, rules, practice) ??
+            unchanged(state))
         : unchanged(state);
 
     case 'pause': {
       if (state.phase !== 'playing') return unchanged(state);
-      const passed = checkPassed(state.round, action.time, rules);
+      const passed = checkPassed(state.round, action.time, rules, practice);
       if (passed) return passed;
       // A frame timestamp can trail a tap that was already handled; pausing
       // before the current sweep began would replay part of the last one.

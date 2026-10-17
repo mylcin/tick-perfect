@@ -1,12 +1,13 @@
-import { dailySeed } from '../game';
+import { dailySeed, type PracticePace } from '../game';
 import type { WatchId } from '../watches/ids';
 import type { Challenge } from './challenge';
 import { dailyWatch } from './daily';
 
 /**
  * What a round is played for: the collection (a fresh seed every round,
- * scores towards bests and unlocks), a Daily, or a friend's challenge. The
- * last two replay a fixed seed, so they never count towards the collection.
+ * scores towards bests and unlocks), a Daily, a friend's challenge, or
+ * practice. A Daily and a challenge replay a fixed seed, so they never
+ * count towards the collection; practice counts towards nothing at all.
  */
 export type RoundMode =
   | { readonly kind: 'collection' }
@@ -17,7 +18,12 @@ export type RoundMode =
       /** A challenge's score to beat, when one led here. */
       readonly toBeat?: number;
     }
-  | { readonly kind: 'challenge'; readonly challenge: Challenge };
+  | { readonly kind: 'challenge'; readonly challenge: Challenge }
+  | {
+      /** A set of targets on the watch on show, missed ones moved past. */
+      readonly kind: 'practice';
+      readonly pace: PracticePace;
+    };
 
 export const COLLECTION_MODE: RoundMode = { kind: 'collection' };
 
@@ -25,6 +31,7 @@ export const COLLECTION_MODE: RoundMode = { kind: 'collection' };
 export function fixedSeed(mode: RoundMode): number | null {
   switch (mode.kind) {
     case 'collection':
+    case 'practice':
       return null;
     case 'daily':
       return dailySeed(mode.number);
@@ -37,6 +44,7 @@ export function fixedSeed(mode: RoundMode): number | null {
 export function modeWatch(mode: RoundMode): WatchId | null {
   switch (mode.kind) {
     case 'collection':
+    case 'practice':
       return null;
     case 'daily':
       return dailyWatch(mode.number);
@@ -49,6 +57,7 @@ export function modeWatch(mode: RoundMode): WatchId | null {
 export function scoreToBeat(mode: RoundMode): number | null {
   switch (mode.kind) {
     case 'collection':
+    case 'practice':
       return null;
     case 'daily':
       return mode.toBeat ?? null;

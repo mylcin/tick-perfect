@@ -111,6 +111,29 @@ export const en: Dictionary = {
     intro: 'Same targets for everyone today · winds the power reserve',
   },
 
+  practice: {
+    open: 'Practice',
+    paces: { slow: 'Slow', normal: 'Normal' },
+    pace: 'Pace',
+    good: 'Good',
+    miss: 'Miss',
+    timing: rateText,
+    missed: timing =>
+      timing === null
+        ? 'Missed. Next target.'
+        : `Missed, ${timing}. Next target.`,
+    title: 'Practice set',
+    hits: (hits, of) => `${String(hits)} of ${String(of)} hit`,
+    perfects: 'Perfect',
+    misses: 'Missed',
+    bestStreak: 'Best streak',
+    rate: 'Rate',
+    spread: 'Spread',
+    note: 'A miss moves on to the next target. Practice counts towards nothing: no best, level, Daily or achievement.',
+    again: 'Again',
+    menu: 'Main menu',
+  },
+
   challenge: {
     title: 'Challenge',
     card: (watch, score) => `Challenge · ${watch} · Beat ${String(score)}`,
@@ -237,6 +260,7 @@ export const en: Dictionary = {
     best: score => `Best ${String(score)}`,
     today: score => `Today ${String(score)}`,
     toBeat: score => `To beat ${String(score)}`,
+    practice: (target, of) => `Practice ${String(target)}/${String(of)}`,
     streak: (streak, needed, next) =>
       next === null
         ? 'Perfect streak: top multiplier'

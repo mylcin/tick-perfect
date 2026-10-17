@@ -16,7 +16,7 @@ export interface NearMiss {
  */
 export function nearMiss(state: GameOverState): NearMiss | null {
   const { miss, round } = state;
-  if (miss.reason !== 'early' && miss.reason !== 'late') return null;
+  if (miss?.reason !== 'early' && miss?.reason !== 'late') return null;
   const { segment } = round;
   const { hitWindow } = segment.target;
   const degrees = Math.max(

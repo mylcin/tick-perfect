@@ -187,7 +187,7 @@ would not help, since the key would ship in the page. What other players see
 | P2       | Daily archive: recent days, bests and run of days                     | S      | Done    |
 | P2       | Open Dailies for new players                                          | S      | Done    |
 | P2       | Ghost replay                                                          | L      | Backlog |
-| P2       | Practice lab                                                          | M      | Backlog |
+| P2       | Practice lab                                                          | M      | Done    |
 | P2       | Result card image                                                     | M      | Backlog |
 | P2       | Sign-out asks whether to keep this device's progress                  | S      | Backlog |
 | P3       | Retry a failed ranked submit, sync on leaving the page                | S      | Backlog |
@@ -216,6 +216,15 @@ would not help, since the key would ship in the page. What other players see
 - `src/screens/title-screen.tsx`: the Daily plays on its watch even
   before the collection opens it (a challenge still waits); the round
   counts towards the Daily alone.
+- `src/game/state.ts`, `src/game/practice.ts`: practice sets. `update`
+  takes optional `PracticeOptions`: a miss becomes a `slip` event and the
+  hand moves on to a new target; after `targets` of them a `complete`
+  event ends the round with no miss. Rounds without it play exactly as
+  before (the golden masters are unchanged). `practiceRules` eases a
+  watch's rules for the slow pace.
+- `src/screens/practice-dialog.tsx`, `game-hud.tsx`, `title-screen.tsx`:
+  the Practice button, the set's count and each target's timing in the
+  HUD, and the summary with the next set's pace.
 - `src/screens/timegrapher-dialog.tsx`: Latest rounds (10, 25, 100, with
   the change on as many before, and a note on how each figure is worked
   out) and the last fortnight of Dailies.

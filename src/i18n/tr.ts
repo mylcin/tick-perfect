@@ -107,6 +107,29 @@ export const tr: Dictionary = {
     intro: 'Bugün herkese aynı hedefler · güç rezervini kurar',
   },
 
+  practice: {
+    open: 'Antrenman',
+    paces: { slow: 'Yavaş', normal: 'Normal' },
+    pace: 'Tempo',
+    good: 'İyi',
+    miss: 'Iska',
+    timing: rateText,
+    missed: timing =>
+      timing === null
+        ? 'Iska. Sıradaki hedef.'
+        : `Iska, ${timing}. Sıradaki hedef.`,
+    title: 'Antrenman seti',
+    hits: (hits, of) => `${String(of)} hedefin ${String(hits)} tanesi vuruldu`,
+    perfects: 'Mükemmel',
+    misses: 'Iska',
+    bestStreak: 'En iyi seri',
+    rate: 'Ortalama',
+    spread: 'Sapma',
+    note: 'Iska, sıradaki hedefe geçer. Antrenman hiçbir şeye sayılmaz: rekor, seviye, Daily ya da başarım yok.',
+    again: 'Tekrar',
+    menu: 'Ana menü',
+  },
+
   challenge: {
     title: 'Meydan okuma',
     card: (watch, score) => `Meydan okuma · ${watch} · Hedef ${String(score)}`,
@@ -231,6 +254,7 @@ export const tr: Dictionary = {
     best: score => `En iyi ${String(score)}`,
     today: score => `Bugün ${String(score)}`,
     toBeat: score => `Hedef ${String(score)}`,
+    practice: (target, of) => `Antrenman ${String(target)}/${String(of)}`,
     streak: (streak, needed, next) =>
       next === null
         ? 'Mükemmel serisi: en yüksek çarpan'

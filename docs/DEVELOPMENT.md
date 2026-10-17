@@ -117,6 +117,12 @@ account hold (`CloudSave`); settings, tips and the round history stay on the
 device. Nothing in the save is trusted beyond the player's own screen: the
 boards only take rounds the server has replayed.
 
+**Practice.** A practice round is the same engine with `PracticeOptions`
+passed to `update`: a miss is a `slip` that moves on to the next target,
+and the set ends with a `complete` event after its targets. The game
+screen saves nothing for it, and the slow pace is `practiceRules`, the
+watch's own rules with an easier ramp.
+
 **Progress over time.** Each finished round adds a line (score, hits,
 Perfects, rate and spread) to its watch's history, the latest 100 per watch
 (`src/state/history.ts`), and each Daily's best goes into an archive of the

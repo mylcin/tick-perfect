@@ -285,3 +285,42 @@ describe('the round log', () => {
     expect(controller.log()?.actions).toEqual([]);
   });
 });
+
+describe('a practice controller', () => {
+  it('plays on after a miss, and says how every target went', () => {
+    const controller = createGameController(DIVER_RULES, {
+      practice: { targets: 3 },
+    });
+    controller.dispatch({ type: 'start', time: T0, seed: 7 });
+    const hit = hitCentre(controller);
+    expect(controller.snapshot().lastTap).toEqual({
+      id: 1,
+      outcome: 'perfect',
+      ms: 0,
+    });
+    // Tapped right after the hit's press: far too early.
+    const { segment } = playing(controller).round;
+    controller.dispatch({
+      type: 'tap',
+      time: segment.startTime + DIVER_RULES.timing.tapDebounceMs,
+    });
+    const { lastTap } = controller.snapshot();
+    expect(lastTap).toMatchObject({ id: 2, outcome: 'early' });
+    expect(lastTap?.ms).toBeLessThan(0);
+    expect(controller.snapshot().state.phase).toBe('playing');
+    expect(hit).toBeGreaterThan(T0);
+
+    // The hand runs past the last target: the set is over, uncracked.
+    const last = playing(controller).round.segment;
+    const over = windowCloseTime(last) + 1000;
+    const events = controller.dispatch({ type: 'tick', time: over }, over);
+    expect(events.map(event => event.type)).toEqual(['slip', 'complete']);
+    expect(controller.snapshot().lastTap).toMatchObject({
+      id: 3,
+      outcome: 'passed',
+      ms: null,
+    });
+    expect(controller.snapshot().endedAt).toBe(over);
+    expect(controller.pose(over + 100).crack).toBeNull();
+  });
+});

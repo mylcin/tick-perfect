@@ -86,14 +86,14 @@ export function replayRound(
     state = update(state, { type: 'tick', time: later }, rules).state;
   }
   if (state.phase !== 'gameOver') return { rejected: 'neverEnded' };
-  const { round, miss } = state;
+  const { round, endedAt } = state;
   return {
     score: round.score,
     hits: round.hits,
     perfects: round.perfects,
     bestStreak: round.bestStreak,
     errors,
-    playedMs: miss.time - round.startedAt,
-    elapsedMs: miss.time - log.start,
+    playedMs: endedAt - round.startedAt,
+    elapsedMs: endedAt - log.start,
   };
 }
